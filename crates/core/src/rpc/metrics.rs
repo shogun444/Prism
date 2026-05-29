@@ -22,6 +22,7 @@
 //!
 //! [prom-fmt]: https://prometheus.io/docs/instrumenting/exposition_formats/
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
@@ -36,7 +37,7 @@ const BUCKETS: &[f64] = &[
 
 
 /// Cumulative histogram for a single `(method, outcome)` combination.
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Histogram {
     /// Cumulative count per bucket (one entry per [`BUCKETS`] bound).
     ///
@@ -108,7 +109,7 @@ impl Histogram {
 /// Keyed by `"<method>:<outcome>"` where *outcome* is either `"success"` or
 /// `"error"`. This lets callers distinguish successful RPC calls from failed
 /// ones in dashboards and alerts.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct RpcMetricsRegistry {
     histograms: HashMap<String, Histogram>,
 }
