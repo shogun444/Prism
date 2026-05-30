@@ -7,9 +7,36 @@ description = "Errors triggered by invalid execution context, such as calling ho
 source_module = "soroban-env-host/src/host.rs"
 
 [[errors]]
+id = "host.context.invalid_action"
+category = "context"
+code = 6
+name = "InvalidAction"
+severity = "Error"
+since_protocol = 20
+summary = "A host function was called in an execution context where that action is not valid."
+detailed_explanation = """
+InvalidAction means the contract or host integration attempted an operation from the wrong \
+execution context, such as using a host capability before the host is ready or outside the \
+allowed invocation lifecycle. This usually points to contract or caller behavior, not a broken \
+network environment.
+"""
+
+[[errors.common_causes]]
+description = "Contract code or a host integration called an environment action outside its valid lifecycle"
+likelihood = "high"
+
+[[errors.suggested_fixes]]
+description = "Review where the host function is called and move it into a valid contract invocation context"
+difficulty = "medium"
+requires_upgrade = false
+
+related_errors = []
+source_file = "soroban-env-host/src/host.rs"
+
+[[errors]]
 id = "host.context.internal_error"
 category = "context"
-code = 0
+code = 7
 name = "InternalError"
 severity = "Fatal"
 since_protocol = 20
