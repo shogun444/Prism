@@ -84,11 +84,11 @@ fn check_binary_version() -> Check {
     let version = env!("CARGO_PKG_VERSION");
     let parts: Vec<&str> = version.split('.').collect();
     if parts.len() == 3 && parts.iter().all(|p| p.parse::<u32>().is_ok()) {
-        Check::ok(format!("Binary version                    v{}", version))
+        Check::ok(format!("Binary version                    v{version}"))
     } else {
         Check::warn(
             "Binary version",
-            format!("Unexpected version string: {}", version),
+            format!("Unexpected version string: {version}"),
         )
     }
 }
@@ -115,20 +115,20 @@ async fn check_rpc(
         .send()
         .await;
 
-    let check_name = format!("RPC connectivity  ({:<8})", label);
+    let check_name = format!("RPC connectivity  ({label:<8})");
 
     match result {
         Ok(resp) if resp.status().is_success() => {
             let ms = start.elapsed().as_millis();
             if ms > 2_000 {
-                Check::warn(check_name, format!("High latency: {}ms", ms))
+                Check::warn(check_name, format!("High latency: {ms}ms"))
             } else {
-                Check::ok(format!("{}  {}ms", check_name, ms))
+                Check::ok(format!("{check_name}  {ms}ms"))
             }
         }
         Ok(resp) => Check::error(check_name, format!("HTTP {}", resp.status())),
         Err(e) if e.is_timeout() => Check::error(check_name, "Timed out after 5s"),
-        Err(e) => Check::error(check_name, format!("Unreachable — {}", e)),
+        Err(e) => Check::error(check_name, format!("Unreachable — {e}")),
     }
 }
 
@@ -176,14 +176,14 @@ fn check_cache() -> Vec<Check> {
 
     let probe = dir.join(".prism_diag_probe");
     match std::fs::write(&probe, b"ok") {
-        Ok(_) => {
+        Ok(()) => {
             let _ = std::fs::remove_file(&probe);
             checks.push(Check::ok("Cache writability"));
         }
         Err(e) => {
             checks.push(Check::error(
                 "Cache writability",
-                format!("Cannot write — {}", e),
+                format!("Cannot write — {e}"),
             ));
         }
     }
@@ -195,18 +195,17 @@ fn check_cache() -> Vec<Check> {
             const ERROR_MIB: u64 = 10;
             if mib < ERROR_MIB {
                 checks.push(Check::error(
-                    format!("Disk space                        {}MiB free", mib),
+                    format!("Disk space                        {mib}MiB free"),
                     "Cache writes may fail",
                 ));
             } else if mib < WARN_MIB {
                 checks.push(Check::warn(
-                    format!("Disk space                        {}MiB free", mib),
+                    format!("Disk space                        {mib}MiB free"),
                     "Running low on disk space",
                 ));
             } else {
                 checks.push(Check::ok(format!(
-                    "Disk space                        {}MiB free",
-                    mib
+                    "Disk space                        {mib}MiB free"
                 )));
             }
         }
@@ -217,8 +216,7 @@ fn check_cache() -> Vec<Check> {
 
     if let Ok(used) = dir_size_mib(&dir) {
         checks.push(Check::ok(format!(
-            "Cache size                        {}MiB used",
-            used
+            "Cache size                        {used}MiB used"
         )));
     }
 
@@ -226,6 +224,7 @@ fn check_cache() -> Vec<Check> {
 }
 
 #[cfg(unix)]
+#[allow(unsafe_code)]
 fn free_bytes(path: &Path) -> Option<u64> {
     use std::ffi::CString;
     let cpath = CString::new(path.to_string_lossy().as_bytes()).ok()?;

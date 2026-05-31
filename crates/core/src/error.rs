@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Standard JSON-RPC 2.0 error object.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Error)]
+#[error("JSON-RPC error (code: {code}): {message}")]
 pub struct JsonRpcError {
     /// Standard JSON-RPC error code.
     pub code: i64,

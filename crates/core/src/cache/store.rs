@@ -20,7 +20,7 @@ pub enum CacheCategory {
 }
 
 impl CacheCategory {
-    fn as_str(&self) -> &'static str {
+    fn as_str(self) -> &'static str {
         match self {
             Self::WasmBlob => "wasm",
             Self::ContractSpec => "spec",

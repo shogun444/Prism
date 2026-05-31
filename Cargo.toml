@@ -6,6 +6,38 @@ members = [
     "crates/wasm",
 ]
 
+[workspace.lints.rust]
+unsafe_code = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Pedantic lints that are noisy or low-value for this codebase
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+doc_markdown = "allow"
+similar_names = "allow"
+unreadable_literal = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+float_cmp = "allow"
+needless_pass_by_value = "allow"
+return_self_not_must_use = "allow"
+unused_async = "allow"
+unnecessary_wraps = "allow"
+items_after_statements = "allow"
+doc_overindented_list_items = "allow"
+assigning_clones = "allow"
+default_trait_access = "allow"
+unnecessary_get_then_check = "allow"
+used_underscore_binding = "allow"
+format_push_string = "allow"
+string_add = "allow"
+borrow_as_ptr = "allow"
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"

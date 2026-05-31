@@ -278,8 +278,7 @@ impl SorobanRpcClient {
 
                     if !status.is_success() {
                         return Err(PrismError::RpcError(format!(
-                            "RPC request failed with HTTP {}: {}",
-                            status, body
+                            "RPC request failed with HTTP {status}: {body}"
                         )));
                     }
                     let rpc_response: JsonRpcResponse<T> = serde_json::from_str(&body)

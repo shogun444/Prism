@@ -93,13 +93,12 @@ fn render_invocation(
             };
             writeln!(
                 output,
-                "{}{}│  {} {}",
-                current_prefix, args_connector, arg_connector, arg
+                "{current_prefix}{args_connector}│  {arg_connector} {arg}"
             )?;
         }
     }
 
-    let auth_prefix = format!("{}{}", current_prefix, child_prefix);
+    let auth_prefix = format!("{current_prefix}{child_prefix}");
     writeln!(
         output,
         "{}├─ {} Authorization:",
@@ -119,7 +118,7 @@ fn render_invocation(
         icons::AUTH_PROVIDED
     )?;
 
-    writeln!(output, "{}├─ ⚡ Resources:", auth_prefix)?;
+    writeln!(output, "{auth_prefix}├─ ⚡ Resources:")?;
     writeln!(
         output,
         "{}│  └─ CPU: {} instructions",
@@ -131,7 +130,9 @@ fn render_invocation(
         auth_prefix, invocation.total_memory_bytes
     )?;
 
-    if !invocation.sub_invocations.is_empty() {
+    if invocation.sub_invocations.is_empty() {
+        writeln!(output, "{auth_prefix}└─ (no sub-invocations)")?;
+    } else {
         writeln!(
             output,
             "{}└─ {} Sub-invocations:",
@@ -140,11 +141,9 @@ fn render_invocation(
         )?;
         for (i, sub_invocation) in invocation.sub_invocations.iter().enumerate() {
             let sub_is_last = i == invocation.sub_invocations.len().saturating_sub(1);
-            let sub_prefix = format!("{}│  ", auth_prefix);
+            let sub_prefix = format!("{auth_prefix}│  ");
             render_invocation(output, sub_invocation, &sub_prefix, sub_is_last)?;
         }
-    } else {
-        writeln!(output, "{}└─ (no sub-invocations)", auth_prefix)?;
     }
 
     Ok(())
@@ -196,7 +195,7 @@ fn render_auth_invocation(
         invocation.function_name
     )?;
 
-    let auth_prefix = format!("{}{}", prefix, child_prefix);
+    let auth_prefix = format!("{prefix}{child_prefix}");
 
     writeln!(
         output,
@@ -217,7 +216,12 @@ fn render_auth_invocation(
         icons::AUTH_PROVIDED
     )?;
 
-    if !invocation.sub_invocations.is_empty() {
+    if invocation.sub_invocations.is_empty() {
+        writeln!(
+            output,
+            "{auth_prefix}└─ (no additional auth requirements)"
+        )?;
+    } else {
         writeln!(
             output,
             "{}└─ {} Cross-contract calls:",
@@ -226,15 +230,9 @@ fn render_auth_invocation(
         )?;
         for (i, sub_invocation) in invocation.sub_invocations.iter().enumerate() {
             let sub_is_last = i == invocation.sub_invocations.len().saturating_sub(1);
-            let sub_prefix = format!("{}│  ", auth_prefix);
+            let sub_prefix = format!("{auth_prefix}│  ");
             render_auth_invocation(output, sub_invocation, &sub_prefix, sub_is_last)?;
         }
-    } else {
-        writeln!(
-            output,
-            "{}└─ (no additional auth requirements)",
-            auth_prefix
-        )?;
     }
 
     Ok(())

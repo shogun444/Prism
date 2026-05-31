@@ -43,15 +43,15 @@ impl<'a> SectionHeader<'a> {
 
     pub fn render(&self) -> String {
         let normalized_title = self.title.trim().to_uppercase();
-        let inner = format!(" {} ", normalized_title);
+        let inner = format!(" {normalized_title} ");
         let border = format!("+{}+", "-".repeat(inner.chars().count()));
-        let middle = format!("|{}|", inner);
+        let middle = format!("|{inner}|");
 
         let palette = ColorPalette::default();
         let border = palette.metadata_text(&border);
         let middle = palette.accent_text(&middle);
 
-        format!("{}\n{}\n{}", border, middle, border)
+        format!("{border}\n{middle}\n{border}")
     }
 }
 
@@ -82,7 +82,7 @@ impl<'a> ErrorCard<'a> {
         let error_colored = error_line.red().bold().to_string();
         let summary_colored = self.report.summary.white().to_string();
 
-        output.push_str(&format!("{}\n", border_colored));
+        output.push_str(&format!("{border_colored}\n"));
         output.push_str(&format!("{} {}\n", "█".red().bold(), category_colored));
         output.push_str(&format!("{} {}\n", "█".red().bold(), error_colored));
 
@@ -92,7 +92,7 @@ impl<'a> ErrorCard<'a> {
         }
 
         output.push_str(&format!("{} {}\n", "█".red().bold(), summary_colored));
-        output.push_str(&format!("{}\n", border_colored));
+        output.push_str(&format!("{border_colored}\n"));
 
         output
     }
@@ -126,7 +126,7 @@ impl<'a> FixList<'a> {
                 let code_block = format!("    ```\n    {}\n    ```", code.trim())
                     .dimmed()
                     .to_string();
-                output.push_str(&format!("{}\n", code_block));
+                output.push_str(&format!("{code_block}\n"));
             }
         }
 
@@ -325,7 +325,7 @@ pub fn render_context_table(context: &TransactionContext) -> String {
 
     let mut output = String::new();
     if let Some(function_name) = &context.function_name {
-        output.push_str(&format!("Function: {}\n", function_name));
+        output.push_str(&format!("Function: {function_name}\n"));
     }
     output.push_str("Arguments:\n");
     output.push_str(&table);
@@ -440,8 +440,8 @@ mod tests {
     fn section_header_renders_boxed_uppercase_title() {
         let rendered = SectionHeader::new("Transaction Summary").render();
         assert!(rendered.contains("TRANSACTION SUMMARY"));
-        assert!(rendered.contains("+"));
-        assert!(rendered.contains("|"));
+        assert!(rendered.contains('+'));
+        assert!(rendered.contains('|'));
     }
 
     #[test]

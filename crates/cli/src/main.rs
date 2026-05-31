@@ -170,19 +170,19 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Decode(args) => commands::decode::run(args, &network, &cli.output, save).await?,
         Commands::Inspect(args) => {
-            commands::inspect::run(args, &network, &cli.output, save).await?
+            commands::inspect::run(args, &network, &cli.output, save).await?;
         }
         Commands::Trace(args) => commands::trace::run(args, &network, &cli.output, save).await?,
         Commands::Profile(args) => {
-            commands::profile::run(args, &network, &cli.output, save).await?
+            commands::profile::run(args, &network, &cli.output, save).await?;
         }
         Commands::Diff(args) => commands::diff::run(args, &network, &cli.output, save).await?,
         Commands::Replay(args) => {
-            commands::replay::run(args, &network, &cli.output, &cli.quiet).await?
+            commands::replay::run(args, &network, &cli.output, &cli.quiet).await?;
         }
         Commands::Whatif(args) => commands::whatif::run(args, &network, &cli.output, save).await?,
         Commands::Export(args) => {
-            commands::export::run(args, &network, &cli.output, &cli.quiet).await?
+            commands::export::run(args, &network, &cli.output, &cli.quiet).await?;
         }
         Commands::Clean(args) => commands::clean::run(args, &cli.output).await?,
         Commands::Db(args) => commands::db::run(args, &cli.output).await?,

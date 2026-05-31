@@ -29,8 +29,10 @@ const FUTURENET_ARCHIVE_URLS: [&str; 1] = ["https://history-futurenet.stellar.or
 /// `Custom` is intentionally flexible so callers can target local or bespoke
 /// Soroban/Stellar deployments without duplicating preset-selection logic.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Default)]
 pub enum Network {
     Mainnet,
+    #[default]
     Testnet,
     Futurenet,
     Custom(String),
@@ -109,11 +111,6 @@ impl Network {
     }
 }
 
-impl Default for Network {
-    fn default() -> Self {
-        Self::Testnet
-    }
-}
 
 impl fmt::Display for Network {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

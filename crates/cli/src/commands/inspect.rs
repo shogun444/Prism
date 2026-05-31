@@ -82,7 +82,7 @@ pub async fn run(
     if let Some(path) = save {
         let json = serde_json::to_string_pretty(&report)?;
         std::fs::write(path, &json)
-            .map_err(|e| anyhow::anyhow!("Failed to write save file '{}': {}", path, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to write save file '{path}': {e}"))?;
         eprintln!("Saved report to {path}");
     }
 

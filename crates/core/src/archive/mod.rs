@@ -46,7 +46,7 @@ impl ArchiveClient {
         let checkpoint_seq = (ledger_sequence / 64) * 64;
         let _path = format_checkpoint_path(checkpoint_seq);
         let archive_count = self.archive_urls.len();
-        let _client = &self.client;
+        let _ = &self.client;
 
 
         tracing::info!(

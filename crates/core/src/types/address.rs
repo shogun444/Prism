@@ -48,7 +48,7 @@ impl Address {
                 address_type: AddressType::Account,
             })
         } else {
-            Err(format!("Invalid strkey: {}", strkey))
+            Err(format!("Invalid strkey: {strkey}"))
         }
     }
 

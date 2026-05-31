@@ -38,7 +38,7 @@ impl Default for ColorPalette {
 }
 
 impl ColorPalette {
-    fn paint(&self, text: &str, style: Style) -> String {
+    fn paint(text: &str, style: Style) -> String {
         if colors_enabled() {
             format!("{}", text.style(style))
         } else {
@@ -47,26 +47,26 @@ impl ColorPalette {
     }
 
     pub fn error_text(&self, text: &str) -> String {
-        self.paint(text, self.error)
+        Self::paint(text, self.error)
     }
 
     pub fn warning_text(&self, text: &str) -> String {
-        self.paint(text, self.warning)
+        Self::paint(text, self.warning)
     }
 
     pub fn success_text(&self, text: &str) -> String {
-        self.paint(text, self.success)
+        Self::paint(text, self.success)
     }
 
     pub fn metadata_text(&self, text: &str) -> String {
-        self.paint(text, self.metadata)
+        Self::paint(text, self.metadata)
     }
 
     pub fn muted_text(&self, text: &str) -> String {
-        self.paint(text, self.muted)
+        Self::paint(text, self.muted)
     }
 
     pub fn accent_text(&self, text: &str) -> String {
-        self.paint(text, self.accent)
+        Self::paint(text, self.accent)
     }
 }

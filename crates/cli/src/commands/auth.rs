@@ -41,17 +41,11 @@ pub enum AuthCommands {
 
 /// Configuration file structure for credential storage.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 struct AuthConfig {
     credentials: std::collections::HashMap<String, String>,
 }
 
-impl Default for AuthConfig {
-    fn default() -> Self {
-        Self {
-            credentials: std::collections::HashMap::new(),
-        }
-    }
-}
 
 /// Execute the auth command.
 pub async fn run(args: AuthArgs, output_format: &str) -> Result<()> {
@@ -92,7 +86,7 @@ async fn login(
     }
 
     match store_credential(&provider, &api_key, config_path).await {
-        Ok(_) => {
+        Ok(()) => {
             if matches!(
                 crate::output::OutputFormat::parse(output_format),
                 crate::output::OutputFormat::Json
@@ -214,7 +208,7 @@ fn select_provider_for_logout() -> Result<String> {
     if let Ok(config) = load_auth_config(None) {
         for provider in config.credentials.keys() {
             if !items.iter().any(|i| i == provider) {
-                items.push(provider.to_string());
+                items.push(provider.clone());
             }
         }
     }
@@ -234,7 +228,7 @@ fn select_provider_for_logout() -> Result<String> {
                 .interact()?;
             Ok(custom)
         }
-        _ => Ok(items[selection].to_string()),
+        _ => Ok(items[selection].clone()),
     }
 }
 
@@ -285,7 +279,7 @@ async fn remove_credential(provider: &str, config_path: Option<String>) -> Resul
     if let Ok(mut config) = load_auth_config(Some(&config_file)) {
         if config
             .credentials
-            .remove(&normalized_provider.to_string())
+            .remove(&normalized_provider.clone())
             .is_some()
         {
             save_auth_config(&config, &config_file).await?;
@@ -315,12 +309,9 @@ fn get_credential_config(provider: &str) -> Result<Option<String>> {
 /// Load auth configuration from file.
 fn load_auth_config(config_file: Option<&PathBuf>) -> Result<AuthConfig> {
     let default_path;
-    let config_file = match config_file {
-        Some(p) => p,
-        None => {
-            default_path = get_config_path(None)?;
-            &default_path
-        }
+    let config_file = if let Some(p) = config_file { p } else {
+        default_path = get_config_path(None)?;
+        &default_path
     };
 
     if !config_file.exists() {
@@ -329,7 +320,7 @@ fn load_auth_config(config_file: Option<&PathBuf>) -> Result<AuthConfig> {
 
     let content = fs::read_to_string(config_file)?;
     let config: AuthConfig =
-        toml::from_str(&content).map_err(|e| anyhow!("Failed to parse config file: {}", e))?;
+        toml::from_str(&content).map_err(|e| anyhow!("Failed to parse config file: {e}"))?;
 
     Ok(config)
 }
@@ -341,9 +332,9 @@ async fn save_auth_config(config: &AuthConfig, config_file: &PathBuf) -> Result<
     }
 
     let content =
-        toml::to_string_pretty(config).map_err(|e| anyhow!("Failed to serialize config: {}", e))?;
+        toml::to_string_pretty(config).map_err(|e| anyhow!("Failed to serialize config: {e}"))?;
 
-    fs::write(config_file, content).map_err(|e| anyhow!("Failed to write config file: {}", e))?;
+    fs::write(config_file, content).map_err(|e| anyhow!("Failed to write config file: {e}"))?;
 
     Ok(())
 }

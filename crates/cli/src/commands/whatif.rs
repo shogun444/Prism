@@ -49,13 +49,13 @@ pub async fn run(
         let payload = WhatIfSavePayload {
             tx_hash: &args.tx_hash,
             patch_file: args.modify.as_deref(),
-            patch_count: patches.as_ref().map(|p| p.len()),
+            patch_count: patches.as_ref().map(std::vec::Vec::len),
             patches: &patches,
         };
 
         let json = serde_json::to_string_pretty(&payload)?;
         std::fs::write(path, &json)
-            .map_err(|e| anyhow::anyhow!("Failed to write save file '{}': {}", path, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to write save file '{path}': {e}"))?;
         eprintln!("Saved what-if session to {path}");
     }
 

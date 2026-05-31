@@ -81,9 +81,9 @@ pub async fn run(args: ServeArgs, network: &NetworkConfig) -> anyhow::Result<()>
         .with_state(Arc::clone(&network));
 
     println!("🚀 Prism instrumentation server starting...");
-    println!("   URL: http://{}", addr);
-    println!("   WebSocket: ws://{}/ws", addr);
-    println!("   API Bridge: http://{}/api/trace/<tx_hash>", addr);
+    println!("   URL: http://{addr}");
+    println!("   WebSocket: ws://{addr}/ws");
+    println!("   API Bridge: http://{addr}/api/trace/<tx_hash>");
     println!("   Press Ctrl+C to stop");
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -122,7 +122,7 @@ async fn get_trace_api(
         Ok(trace) => axum::Json(trace).into_response(),
         Err(e) => (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Trace failed: {}", e),
+            format!("Trace failed: {e}"),
         ).into_response(),
     }
 }
@@ -187,7 +187,7 @@ async fn stream_trace_replay(
         Ok(state) => state,
         Err(e) => {
             let _ = sender.send(TraceStreamMessage::TraceError {
-                error: format!("Failed to reconstruct state: {}", e),
+                error: format!("Failed to reconstruct state: {e}"),
             });
             return Err(e.into());
         }
@@ -203,7 +203,7 @@ async fn stream_trace_replay(
             Ok(r) => r,
             Err(e) => {
                 let _ = sender.send(TraceStreamMessage::TraceError {
-                    error: format!("Sandbox execution failed: {}", e),
+                    error: format!("Sandbox execution failed: {e}"),
                 });
                 return Err(e.into());
             }
