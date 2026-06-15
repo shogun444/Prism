@@ -1,6 +1,4 @@
-//! Global Prism configuration manager.
-//!
-//! Handles reading and writing user preferences at `~/.prism/config.toml`.
+
 
 #![allow(dead_code)]
 
@@ -11,35 +9,29 @@ use prism_core::types::config::PrismConfig;
 use std::path::Path;
 use std::path::PathBuf;
 
-/// Reads and writes Prism's global configuration file.
 #[derive(Debug, Clone)]
 pub struct ConfigManager {
     config_path: PathBuf,
 }
 
 impl ConfigManager {
-    /// Create a config manager using the default global config location.
+
     pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             config_path: default_config_path()?,
         })
     }
 
-    /// Create a config manager using an explicit config file path.
-    ///
-    /// Useful for tests and tooling that need an isolated config file.
     #[cfg(test)]
     pub fn with_path(config_path: PathBuf) -> Self {
         Self { config_path }
     }
 
-    /// Return the full path to the config file.
     #[cfg(test)]
     pub fn path(&self) -> &Path {
         &self.config_path
     }
 
-    /// Load config from disk, returning defaults when the file does not exist.
     pub fn load(&self) -> anyhow::Result<PrismConfig> {
         if !self.config_path.exists() {
             return Ok(PrismConfig::default());
@@ -59,7 +51,6 @@ impl ConfigManager {
         Ok(config)
     }
 
-    /// Save config to disk in TOML format.
     #[cfg(test)]
     pub fn save(&self, config: &PrismConfig) -> anyhow::Result<()> {
         if let Some(parent) = self.config_path.parent() {

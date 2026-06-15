@@ -1,4 +1,4 @@
-//! CLI command handlers.
+
 
 pub mod auth;
 pub mod clean;

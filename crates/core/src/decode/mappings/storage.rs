@@ -1,24 +1,19 @@
-//! Storage error mappings.
-//!
-//! This module keeps the Storage category's human-readable decoding details in a
-//! compact, testable form for callers that need direct code-to-summary lookup.
+
 
 use crate::types::report::Severity;
 
-/// Human-readable Storage error detail.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StorageErrorDetail {
-    /// Numeric Storage subcode.
+
     pub code: u32,
-    /// Canonical error name.
+
     pub name: &'static str,
     /// Short explanation of the failure.
     pub summary: &'static str,
-    /// Severity to surface in diagnostics.
+
     pub severity: Severity,
 }
 
-/// Complete Storage error mapping table.
 pub const STORAGE_ERROR_DETAILS: &[StorageErrorDetail] = &[
     StorageErrorDetail {
         code: 0,
@@ -46,7 +41,6 @@ pub const STORAGE_ERROR_DETAILS: &[StorageErrorDetail] = &[
     },
 ];
 
-/// Look up a single Storage error detail by subcode.
 pub fn lookup(code: u32) -> Option<&'static StorageErrorDetail> {
     STORAGE_ERROR_DETAILS.iter().find(|detail| detail.code == code)
 }

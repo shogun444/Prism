@@ -1,14 +1,13 @@
-//! Resource profiler — generates consumption profiles and identifies hotspots.
+
 
 use crate::replay::sandbox::SandboxResult;
 use crate::error::PrismResult;
 use crate::types::trace::ResourceProfile;
 
-/// Generate a resource consumption profile from sandbox execution results.
 pub fn generate_profile(result: &SandboxResult) -> PrismResult<ResourceProfile> {
     let mut profile = ResourceProfile {
         total_cpu: result.total_cpu,
-        cpu_limit: 0, // TODO: Extract from transaction resource limits
+        cpu_limit: 0, 
         total_memory: result.total_memory,
         memory_limit: 0,
         total_read_bytes: 0,
@@ -16,7 +15,6 @@ pub fn generate_profile(result: &SandboxResult) -> PrismResult<ResourceProfile> 
         hotspots: Vec::new(),
         warnings: Vec::new(),
     };
-
 
     if profile.cpu_limit > 0 {
         let cpu_usage = (profile.total_cpu as f64 / profile.cpu_limit as f64) * 100.0;

@@ -1,4 +1,4 @@
-//! Output formatting for CLI reports.
+
 
 #![allow(dead_code)]
 

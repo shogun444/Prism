@@ -1,13 +1,9 @@
-//! Trace collector — builds a hierarchical execution tree from raw trace events.
+
 
 use crate::replay::sandbox::{SandboxResult, TraceEventType};
 use crate::error::PrismResult;
 use crate::types::trace::{ContractInvocation, HostFunctionCall};
 
-/// Build a hierarchical execution tree from raw sandbox trace events.
-///
-/// Converts the flat stream of trace events into a nested tree:
-/// Transaction → Contract Invocations → Host Function Calls → Nested Invocations
 pub fn build_trace_tree(result: &SandboxResult) -> PrismResult<Vec<ContractInvocation>> {
     let mut root_invocations: Vec<ContractInvocation> = Vec::new();
     let mut stack: Vec<ContractInvocation> = Vec::new();

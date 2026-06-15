@@ -14,11 +14,10 @@ use tower_http::trace::TraceLayer;
 
 #[derive(Args)]
 pub struct ServeArgs {
-    /// Port to listen on for WebSocket connections.
+
     #[arg(long, short, default_value = "8080")]
     pub port: u16,
 
-    /// Host to bind to.
     #[arg(long, default_value = "127.0.0.1")]
     pub host: String,
 }
@@ -69,7 +68,7 @@ pub async fn run(args: ServeArgs, network: &NetworkConfig) -> anyhow::Result<()>
         ServeDir::new(static_dir)
     } else {
         tracing::warn!("Web app assets not found at {}. Serving placeholder.", static_dir.display());
-        ServeDir::new(".") // Fallback to current dir for now
+        ServeDir::new(".") 
     };
 
     let app = Router::new()

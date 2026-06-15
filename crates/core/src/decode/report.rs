@@ -1,14 +1,10 @@
-//! Report generator.
-//!
-//! Assembles decoded error information, taxonomy data, and context into
-//! a structured `DiagnosticReport`.
+
 
 use crate::decode::host_error::ClassifiedError;
 use crate::taxonomy::loader::TaxonomyDatabase;
 use crate::error::PrismResult;
 use crate::types::report::{DiagnosticReport, RootCause, Severity, SuggestedFix};
 
-/// Build a diagnostic report from a classified error.
 pub fn build_report(error: &ClassifiedError) -> PrismResult<DiagnosticReport> {
     let db = TaxonomyDatabase::load_embedded()?;
 

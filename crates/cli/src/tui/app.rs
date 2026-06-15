@@ -1,8 +1,7 @@
-//! TUI application entry point.
+
 
 use prism_core::types::config::NetworkConfig;
 
-/// Launch the interactive TUI debugger.
 pub async fn launch(tx_hash: &str, network: &NetworkConfig) -> anyhow::Result<()> {
     let state = crate::tui::state::TuiState {
         tx_hash: tx_hash.to_string(),

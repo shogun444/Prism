@@ -1,22 +1,19 @@
-//! Network and application configuration types.
+
 
 pub use crate::network::config::{Network, NetworkConfig};
 use serde::{Deserialize, Serialize};
 
-/// Default per-request timeout: 30 seconds.
 pub const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 30;
 
-
-/// Global Prism configuration loaded from disk.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PrismConfig {
-    /// Default network to use.
+
     pub default_network: Network,
-    /// Custom network configurations.
+
     pub networks: Vec<NetworkConfig>,
-    /// Local cache directory override.
+
     pub cache_dir: Option<String>,
-    /// Maximum cache size in MB.
+
     pub max_cache_size_mb: u64,
 }
 

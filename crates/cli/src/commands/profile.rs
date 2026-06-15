@@ -1,11 +1,11 @@
-//! `prism profile` - Resource consumption profile with hotspot analysis.
+
 
 use clap::Args;
 use prism_core::types::config::NetworkConfig;
 
 #[derive(Args)]
 pub struct ProfileArgs {
-    /// Transaction hash to profile.
+
     pub tx_hash: String,
 }
 

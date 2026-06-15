@@ -1,30 +1,18 @@
-//! Generic JSON-RPC 2.0 client primitives.
-//!
-//! Provides strongly-typed request/response envelopes and a reusable HTTP
-//! transport so every RPC call is validated at compile time via Serde.
+
 
 use crate::error::{PrismError, PrismResult, JsonRpcError};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
-/// Base delay (ms) for exponential backoff: delay = `BASE_DELAY_MS × 2^attempt`.
 const BASE_DELAY_MS: u64 = 100;
 
-/// Hard ceiling on any single backoff sleep to avoid excessively long waits.
-const MAX_DELAY_MS: u64 = 10_000; // 10 seconds
+const MAX_DELAY_MS: u64 = 10_000; 
 
-/// Compute the capped exponential backoff duration for a given attempt number.
-///
-/// Returns `BASE_DELAY_MS × 2^attempt`, clamped to [`MAX_DELAY_MS`].
 fn backoff_duration(attempt: u32) -> Duration {
     let ms = BASE_DELAY_MS.saturating_mul(1u64.saturating_shl(attempt));
     Duration::from_millis(ms.min(MAX_DELAY_MS))
 }
 
-
-/// JSON-RPC 2.0 request envelope.
-///
-/// `T` is the method-specific params struct; it must implement [`Serialize`].
 #[derive(Debug, Serialize)]
 pub struct JsonRpcRequest<T: Serialize> {
     pub jsonrpc: &'static str,
@@ -34,7 +22,7 @@ pub struct JsonRpcRequest<T: Serialize> {
 }
 
 impl<T: Serialize> JsonRpcRequest<T> {
-    /// Construct a request with the standard `"2.0"` version string.
+
     pub fn new(id: u64, method: &'static str, params: T) -> Self {
         Self { jsonrpc: "2.0", id, method, params }
     }
@@ -52,7 +40,6 @@ pub struct JsonRpcResponse<T> {
     pub result: Option<T>,
     pub error: Option<JsonRpcError>,
 }
-
 
 /// Params for `getTransaction`.
 #[derive(Debug, Serialize)]
@@ -86,7 +73,6 @@ pub struct EmptyParams {}
 
 /// Params for `getHealth` — the method takes no parameters.
 pub type GetHealthParams = EmptyParams;
-
 
 /// Low-level JSON-RPC HTTP transport.
 ///

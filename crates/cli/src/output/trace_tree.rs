@@ -1,10 +1,9 @@
-//! TraceTree terminal renderer for visualizing contract call stacks.
+
 
 use prism_core::types::trace::{ ContractInvocation, ExecutionTrace };
 use std::io::Write;
 use termcolor::WriteColor;
 
-/// Unicode tree characters for rendering
 mod tree_chars {
     pub const VERTICAL: &str = "│";
     pub const BRANCH: &str = "├──";
@@ -13,7 +12,6 @@ mod tree_chars {
     pub const CONTINUE: &str = "│  ";
 }
 
-/// Colors for terminal output
 #[allow(dead_code)]
 mod colors {
     use termcolor::{ Color, ColorSpec, WriteColor };
@@ -53,7 +51,6 @@ mod colors {
     }
 }
 
-/// Render a contract invocation tree
 pub fn render_contract_tree<W: WriteColor>(
     writer: &mut W,
     invocation: &ContractInvocation,
@@ -148,7 +145,6 @@ pub fn render_contract_tree<W: WriteColor>(
     Ok(())
 }
 
-/// Render a host function call
 fn render_host_call<W: WriteColor>(
     writer: &mut W,
     host_call: &prism_core::types::trace::HostFunctionCall,
@@ -219,7 +215,6 @@ fn render_host_call<W: WriteColor>(
     Ok(())
 }
 
-/// Render the complete execution trace as a tree
 pub fn render_trace_tree<W: WriteColor>(
     writer: &mut W,
     trace: &ExecutionTrace
@@ -285,7 +280,6 @@ pub fn render_trace_tree<W: WriteColor>(
     Ok(())
 }
 
-/// Format CPU instructions for display
 fn format_cpu_usage(cpu: u64) -> String {
     if cpu < 1_000 {
         format!("{} instr", cpu)
@@ -296,7 +290,6 @@ fn format_cpu_usage(cpu: u64) -> String {
     }
 }
 
-/// Format memory bytes for display
 fn format_memory_usage(bytes: u64) -> String {
     if bytes < 1_024 {
         format!("{} B", bytes)
@@ -309,7 +302,6 @@ fn format_memory_usage(bytes: u64) -> String {
     }
 }
 
-/// Print execution trace in tree format to stdout
 pub fn print_trace_tree(trace: &ExecutionTrace) -> anyhow::Result<()> {
     use termcolor::{ BufferWriter, ColorChoice };
 

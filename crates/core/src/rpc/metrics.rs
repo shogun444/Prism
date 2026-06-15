@@ -1,54 +1,20 @@
-//! Prometheus-compatible metrics for Soroban RPC call durations.
-//!
-//! Provides a global, thread-safe histogram registry that records the
-//! wall-clock duration of every RPC round-trip performed by
-//! [`super::client::SorobanRpcClient`].
-//!
-//! # Prometheus Text Format
-//!
-//! Call [`gather`] to produce a UTF-8 string in the
-//! [Prometheus text exposition format][prom-fmt] suitable for serving from a
-//! `/metrics` HTTP endpoint or writing to a file.
-//!
-//! ```text
-//! # HELP rpc_request_duration_seconds Duration of Soroban RPC requests in seconds.
-//! # TYPE rpc_request_duration_seconds histogram
-//! rpc_request_duration_seconds_bucket{method="getTransaction",outcome="success",le="0.005"} 0
-//! rpc_request_duration_seconds_bucket{method="getTransaction",outcome="success",le="0.01"} 1
-//! ...
-//! rpc_request_duration_seconds_count{method="getTransaction",outcome="success"} 3
-//! rpc_request_duration_seconds_sum{method="getTransaction",outcome="success"} 0.183000000
-//! ```
-//!
-//! [prom-fmt]: https://prometheus.io/docs/instrumenting/exposition_formats/
+
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
-
-/// Standard Prometheus HTTP latency bucket upper bounds (seconds).
-///
-/// Matches the defaults used by the official Prometheus client libraries and
-/// covers sub-millisecond to 10-second Soroban RPC calls.
 const BUCKETS: &[f64] = &[
     0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
 ];
 
-
-/// Cumulative histogram for a single `(method, outcome)` combination.
 #[derive(Debug, Serialize, Deserialize)]
 struct Histogram {
-    /// Cumulative count per bucket (one entry per [`BUCKETS`] bound).
-    ///
-    /// `buckets[i]` counts observations whose value is ≤ `BUCKETS[i]`.
-    /// Values are cumulative, matching the Prometheus wire format.
+
     bucket_counts: Vec<u64>,
 
-    /// Total number of observations recorded.
     count: u64,
 
-    /// Sum of all observed values in seconds.
     sum: f64,
 }
 
@@ -61,7 +27,6 @@ impl Histogram {
         }
     }
 
-    /// Record a single observation of `value` seconds.
     fn observe(&mut self, value: f64) {
         self.count += 1;
         self.sum += value;
@@ -73,7 +38,6 @@ impl Histogram {
         }
     }
 
-    /// Render this histogram in Prometheus text format for the given labels.
     fn render(&self, method: &str, outcome: &str, out: &mut String) {
         let mut cumulative = 0u64;
 
@@ -103,23 +67,13 @@ impl Histogram {
     }
 }
 
-
-/// Global registry that stores one histogram per `(method, outcome)` pair.
-///
-/// Keyed by `"<method>:<outcome>"` where *outcome* is either `"success"` or
-/// `"error"`. This lets callers distinguish successful RPC calls from failed
-/// ones in dashboards and alerts.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct RpcMetricsRegistry {
     histograms: HashMap<String, Histogram>,
 }
 
 impl RpcMetricsRegistry {
-    /// Record one observation of `duration_secs` for `method`.
-    ///
-    /// `success` determines the `outcome` label value:
-    /// - `true`  → `"success"`
-    /// - `false` → `"error"`
+
     pub fn record(&mut self, method: &str, duration_secs: f64, success: bool) {
         let outcome = if success { "success" } else { "error" };
         let key = format!("{method}:{outcome}");
@@ -129,10 +83,6 @@ impl RpcMetricsRegistry {
             .observe(duration_secs);
     }
 
-    /// Render all recorded histograms in Prometheus text exposition format.
-    ///
-    /// Output is sorted by histogram key for deterministic ordering, which
-    /// simplifies testing and diff-based comparisons.
     pub fn gather(&self) -> String {
         let mut out = String::with_capacity(512);
         out.push_str(
@@ -156,15 +106,11 @@ impl RpcMetricsRegistry {
     }
 }
 
-
-/// Process-wide metrics registry, initialised on first access.
 static REGISTRY: OnceLock<Mutex<RpcMetricsRegistry>> = OnceLock::new();
 
-/// Returns a reference to the global registry, initialising it if necessary.
 fn registry() -> &'static Mutex<RpcMetricsRegistry> {
     REGISTRY.get_or_init(|| Mutex::new(RpcMetricsRegistry::default()))
 }
-
 
 /// Record the duration of a single RPC round-trip in the global registry.
 ///
@@ -207,11 +153,9 @@ pub fn gather() -> String {
         .unwrap_or_default()
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn histogram_starts_empty() {
@@ -268,7 +212,6 @@ mod tests {
         assert_eq!(h.count, 1, "+Inf bucket == count");
     }
 
-
     #[test]
     fn registry_separates_success_and_error() {
         let mut reg = RpcMetricsRegistry::default();
@@ -288,7 +231,6 @@ mod tests {
 
         assert_eq!(reg.histograms.len(), 2);
     }
-
 
     #[test]
     fn gather_contains_help_and_type_lines() {
@@ -347,7 +289,6 @@ mod tests {
             "getTransaction should appear before simulateTransaction"
         );
     }
-
 
     #[test]
     fn record_rpc_duration_does_not_panic() {

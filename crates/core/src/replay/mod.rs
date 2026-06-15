@@ -1,4 +1,4 @@
-//! Tier 2: Execution Trace & Replay Engine.
+
 
 pub mod differ;
 pub mod profiler;
@@ -10,9 +10,6 @@ use crate::types::config::NetworkConfig;
 use crate::error::PrismResult;
 use crate::types::trace::ExecutionTrace;
 
-/// Replay a transaction and produce a full execution trace.
-///
-/// This is the main entry point for Tier 2 functionality.
 pub async fn replay_transaction(
     tx_hash: &str,
     network: &NetworkConfig,

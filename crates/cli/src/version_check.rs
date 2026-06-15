@@ -1,7 +1,4 @@
-//! Background version checking for the Prism CLI.
-//!
-//! Silently checks GitHub for new releases and caches the result for 24 hours
-//! to avoid rate limits and keep the CLI fast.
+
 
 use chrono::{DateTime, Utc};
 use reqwest::Client;
@@ -21,19 +18,14 @@ struct GitHubRelease {
     tag_name: String,
 }
 
-/// Determines the path for the version check cache file.
 fn cache_file_path() -> Option<PathBuf> {
     dirs::cache_dir().map(|dir| dir.join("prism").join("version_check.json"))
 }
 
-/// Asynchronously checks if a newer version of Prism is available.
-/// Fails silently on any network or parsing error.
-/// Returns the new version (without 'v' prefix) if an update is available.
 pub async fn check_for_updates() -> Option<String> {
     check_for_updates_internal().await.unwrap_or(None)
 }
 
-/// Internal execution of the update check, returning a `Result` for easy error propagation.
 async fn check_for_updates_internal() -> anyhow::Result<Option<String>> {
     let cache_path =
         cache_file_path().ok_or_else(|| anyhow::anyhow!("No cache directory found"))?;
@@ -78,7 +70,6 @@ async fn check_for_updates_internal() -> anyhow::Result<Option<String>> {
     Ok(compare_versions(&latest_version))
 }
 
-/// Compares the given latest version string with the current binary version.
 fn compare_versions(latest: &str) -> Option<String> {
     let current_version = env!("CARGO_PKG_VERSION");
 

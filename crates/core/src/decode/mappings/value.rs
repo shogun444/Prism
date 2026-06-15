@@ -1,11 +1,7 @@
-//! Value error mappings.
-//!
-//! This module keeps the Value category's human-readable decoding details in a
-//! compact, testable form for callers that need direct code-to-summary lookup.
+
 
 use crate::types::report::Severity;
 
-/// Severity mapping specific to Value errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ErrorSeverity {
     Critical,
@@ -25,20 +21,18 @@ impl From<ErrorSeverity> for Severity {
     }
 }
 
-/// Human-readable Value error detail.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValueErrorDetail {
-    /// Numeric Value subcode.
+
     pub code: u32,
-    /// Canonical error name.
+
     pub name: &'static str,
     /// Short explanation of the failure.
     pub summary: &'static str,
-    /// Severity to surface in diagnostics.
+
     pub severity: ErrorSeverity,
 }
 
-/// Complete Value error mapping table.
 pub const VALUE_ERROR_DETAILS: &[ValueErrorDetail] = &[
     ValueErrorDetail {
         code: 0,
@@ -90,7 +84,6 @@ pub const VALUE_ERROR_DETAILS: &[ValueErrorDetail] = &[
     },
 ];
 
-/// Look up a single Value error detail by subcode.
 pub fn lookup(code: u32) -> Option<&'static ValueErrorDetail> {
     VALUE_ERROR_DETAILS.iter().find(|detail| detail.code == code)
 }

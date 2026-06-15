@@ -1,15 +1,14 @@
-//! Error types for the Prism crate.
+
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-/// Standard JSON-RPC 2.0 error object.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Error)]
 #[error("JSON-RPC error (code: {code}): {message}")]
 pub struct JsonRpcError {
-    /// Standard JSON-RPC error code.
+
     pub code: i64,
-    /// Human-readable error message.
+
     pub message: String,
 }
 
@@ -76,50 +75,38 @@ pub enum PrismError {
         reason: String,
     },
 
-    /// Error parsing WASM or contract spec data.
     #[error("Spec error: {0}")]
     SpecError(String),
 
-    /// Error in the local cache layer.
     #[error("Cache error: {0}")]
     CacheError(String),
 
-    /// Error loading or querying the taxonomy database.
     #[error("Taxonomy error: {0}")]
     TaxonomyError(String),
 
-    /// Error during transaction replay.
     #[error("Replay error: {0}")]
     ReplayError(String),
 
-    /// The requested transaction was not found.
     #[error("Transaction not found: {0}")]
     TransactionNotFound(String),
 
-    /// The requested contract was not found on the ledger.
     #[error("Contract not found: {0}")]
     ContractNotFound(String),
 
-    /// An invalid network or configuration was provided.
     #[error("Config error: {0}")]
     ConfigError(String),
 
-    /// An invalid Stellar address was provided.
     #[error("Invalid address: {0}")]
     InvalidAddress(String),
 
-    /// Generic internal error.
     #[error("Internal error: {0}")]
     Internal(String),
 
-    /// The transaction result XDR does not contain an InvokeHostFunction operation.
     #[error("Not a Soroban transaction: no InvokeHostFunction operation found")]
     NotSorobanTransaction,
 
-    /// The transaction succeeded — there is no error to decode.
     #[error("Transaction succeeded — no error to decode")]
     TransactionSucceeded,
 }
 
-/// Convenience Result type for Prism operations.
 pub type PrismResult<T> = Result<T, PrismError>;

@@ -1,23 +1,20 @@
-//! `prism trace` — Replay transaction and output execution trace.
+
 
 use clap::Args;
 use prism_core::types::config::NetworkConfig;
 
 #[derive(Args)]
 pub struct TraceArgs {
-    /// Transaction hash to trace.
+
     #[arg(index = 1, value_name = "TX_HASH")]
     pub tx_hash: String,
 
-    /// Output trace to a file instead of stdout.
     #[arg(long, short)]
     pub output_file: Option<String>,
 
-    /// Show authorization tree view.
     #[arg(long)]
     pub auth: bool,
 
-    /// Show only authorization structure.
     #[arg(long)]
     pub auth_only: bool,
 }

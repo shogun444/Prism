@@ -1,7 +1,4 @@
-//! Network configuration management.
-//!
-//! Manages RPC endpoints, archive URLs, network passphrases for
-//! mainnet/testnet/futurenet/custom networks.
+
 
 use crate::error::{PrismError, PrismResult};
 use crate::rpc::jsonrpc::{JsonRpcTransport, JsonRpcRequest, GetHealthParams};
@@ -24,10 +21,6 @@ const TESTNET_ARCHIVE_URLS: [&str; 1] =
     ["https://history.stellar.org/prd/core-testnet/core_testnet_001"];
 const FUTURENET_ARCHIVE_URLS: [&str; 1] = ["https://history-futurenet.stellar.org"];
 
-/// Supported Stellar networks.
-///
-/// `Custom` is intentionally flexible so callers can target local or bespoke
-/// Soroban/Stellar deployments without duplicating preset-selection logic.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[derive(Default)]
 pub enum Network {
@@ -39,14 +32,9 @@ pub enum Network {
 }
 
 impl Network {
-    /// Conventional name used for the default local standalone network.
+
     pub const LOCAL: &str = "local";
 
-    /// Parse a network selector into a strongly typed network.
-    ///
-    /// Accepts preset aliases such as `mainnet`, `testnet`, `futurenet`, and
-    /// local aliases such as `local`, `localhost`, and `standalone`.
-    /// Any HTTP(S) string is treated as a custom RPC target.
     pub fn parse(value: &str) -> PrismResult<Self> {
         let trimmed = value.trim();
         if trimmed.is_empty() {
@@ -70,7 +58,6 @@ impl Network {
         Ok(network)
     }
 
-    /// Canonical identifier for logging, config serialization, and display.
     pub fn as_key(&self) -> &str {
         match self {
             Self::Mainnet => "mainnet",
@@ -80,17 +67,14 @@ impl Network {
         }
     }
 
-    /// True when this network targets a local standalone deployment.
     pub fn is_local(&self) -> bool {
         matches!(self, Self::Custom(name) if name.eq_ignore_ascii_case(Self::LOCAL))
     }
 
-    /// Build the default connection settings for this network target.
     pub fn config(&self) -> NetworkConfig {
         NetworkConfig::for_network(self.clone())
     }
 
-    /// Return the official Stellar network passphrase for this network.
     pub fn passphrase(&self) -> &str {
         match self {
             Self::Mainnet => MAINNET_PASSPHRASE,
@@ -100,7 +84,6 @@ impl Network {
         }
     }
 
-    /// Return the default public RPC URL for this network.
     pub fn default_rpc_url(&self) -> &str {
         match self {
             Self::Mainnet => MAINNET_RPC_URL,
@@ -110,7 +93,6 @@ impl Network {
         }
     }
 }
-
 
 impl fmt::Display for Network {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -145,25 +127,24 @@ impl<'de> Deserialize<'de> for Network {
     }
 }
 
-/// Configuration for connecting to a Stellar network.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkConfig {
-    /// The network to connect to.
+
     pub network: Network,
-    /// Soroban RPC endpoint URL.
+
     pub rpc_url: String,
-    /// Network passphrase.
+
     pub network_passphrase: String,
-    /// History archive URL(s).
+
     pub archive_urls: Vec<String>,
-    /// Optional API key for authenticating RPC requests.
+
     pub api_key: Option<String>,
-    /// Per-request timeout in seconds for all RPC calls.
+
     pub request_timeout_secs: u64,
 }
 
 impl NetworkConfig {
-    /// Create configuration for Stellar testnet.
+
     pub fn testnet() -> Self {
         Self {
             network: Network::Testnet,
@@ -178,7 +159,6 @@ impl NetworkConfig {
         }
     }
 
-    /// Create configuration for Stellar mainnet.
     pub fn mainnet() -> Self {
         Self {
             network: Network::Mainnet,
@@ -193,7 +173,6 @@ impl NetworkConfig {
         }
     }
 
-    /// Create configuration for Stellar futurenet.
     pub fn futurenet() -> Self {
         Self {
             network: Network::Futurenet,
@@ -208,7 +187,6 @@ impl NetworkConfig {
         }
     }
 
-    /// Create configuration for a local standalone Soroban RPC.
     pub fn local() -> Self {
         Self {
             network: Network::Custom(Network::LOCAL.to_string()),
@@ -220,7 +198,6 @@ impl NetworkConfig {
         }
     }
 
-    /// Create a custom network configuration.
     pub fn custom(
         network_name: impl Into<String>,
         rpc_url: impl Into<String>,
@@ -236,13 +213,11 @@ impl NetworkConfig {
         }
     }
 
-    /// Attach history archive URLs to a configuration.
     pub fn with_archive_urls(mut self, archive_urls: Vec<String>) -> Self {
         self.archive_urls = archive_urls;
         self
     }
 
-    /// Build the default configuration for a typed network target.
     pub fn for_network(network: Network) -> Self {
         match network {
             Network::Mainnet => Self::mainnet(),
@@ -258,9 +233,7 @@ impl NetworkConfig {
         }
     }
 }
-/// Resolve a network name string to a `NetworkConfig`.
-///
-/// Accepts preset names, local aliases, or a custom RPC URL.
+
 pub fn resolve_network(network_str: &str) -> NetworkConfig {
     match resolve_network_target(network_str) {
         Ok(network) => NetworkConfig::for_network(network),
@@ -271,17 +244,14 @@ pub fn resolve_network(network_str: &str) -> NetworkConfig {
     }
 }
 
-/// Resolve a network selector to a strongly typed target.
 pub fn resolve_network_target(network_str: &str) -> PrismResult<Network> {
     Network::parse(network_str)
 }
 
-/// Get the default network configuration.
 pub fn default_network() -> NetworkConfig {
     Network::default().config()
 }
 
-/// Validate that a network configuration is reachable.
 #[allow(dead_code)]
 pub async fn validate_network(config: &NetworkConfig) -> bool {
     let transport = JsonRpcTransport::new(&config.rpc_url, 0);

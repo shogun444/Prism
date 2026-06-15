@@ -1,11 +1,7 @@
-//! Budget error mappings.
-//!
-//! This module keeps the Budget category's human-readable decoding details in a
-//! compact, testable form for callers that need direct code-to-summary lookup.
+
 
 use crate::types::report::Severity;
 
-/// Severity mapping specific to Budget errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ErrorSeverity {
     Critical,
@@ -25,20 +21,18 @@ impl From<ErrorSeverity> for Severity {
     }
 }
 
-/// Human-readable Budget error detail.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BudgetErrorDetail {
-    /// Numeric Budget subcode.
+
     pub code: u32,
-    /// Canonical error name.
+
     pub name: &'static str,
     /// Short explanation of the failure.
     pub summary: &'static str,
-    /// Severity to surface in diagnostics.
+
     pub severity: ErrorSeverity,
 }
 
-/// Complete Budget error mapping table.
 pub const BUDGET_ERROR_DETAILS: &[BudgetErrorDetail] = &[
     BudgetErrorDetail {
         code: 0,
@@ -66,7 +60,6 @@ pub const BUDGET_ERROR_DETAILS: &[BudgetErrorDetail] = &[
     },
 ];
 
-/// Look up a single Budget error detail by subcode.
 pub fn lookup(code: u32) -> Option<&'static BudgetErrorDetail> {
     BUDGET_ERROR_DETAILS.iter().find(|detail| detail.code == code)
 }

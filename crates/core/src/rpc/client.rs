@@ -1,8 +1,4 @@
-//! Soroban RPC client.
-//!
-//! Communicates with Soroban RPC endpoints: `getTransaction`, `simulateTransaction`,
-//! `getLedgerEntries`, `getEvents`, `getLatestLedger`. Handles retries,
-//! rate-limit backoff, and 5xx server-error backoff.
+
 
 use crate::error::{PrismError, PrismResult};
 use crate::network::NetworkConfig;
@@ -11,32 +7,16 @@ use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, USER_AGENT};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
-/// Base delay (ms) for exponential backoff: delay = `BASE_DELAY_MS × 2^attempt`.
 const BASE_DELAY_MS: u64 = 100;
 
-/// Hard ceiling on any single backoff sleep to avoid excessively long waits.
-const MAX_DELAY_MS: u64 = 10_000; // 10 seconds
+const MAX_DELAY_MS: u64 = 10_000; 
 
-/// Compute the capped exponential backoff duration for a given attempt number.
-///
-/// Returns `BASE_DELAY_MS × 2^attempt`, clamped to [`MAX_DELAY_MS`].
-///
-/// | attempt | raw ms | clamped ms |
-/// |---------|--------|------------|
-/// |    1    |   200  |    200     |
-/// |    2    |   400  |    400     |
-/// |    3    |   800  |    800     |
-/// |    4    |  1600  |   1600     |
-/// |    6    |  6400  |   6400     |
-/// |    7    | 12800  |  10000     |
 fn backoff_duration(attempt: u32) -> Duration {
-    // saturating_shl prevents overflow for large attempt values
+
     let ms = BASE_DELAY_MS.saturating_mul(1u64.saturating_shl(attempt));
     Duration::from_millis(ms.min(MAX_DELAY_MS))
 }
 
-
-/// Ledger footprint returned by `simulateTransaction`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulateFootprint {
     #[serde(rename = "readOnly", default)]
@@ -45,13 +25,11 @@ pub struct SimulateFootprint {
     pub read_write: Vec<String>,
 }
 
-/// Authorization entry returned by `simulateTransaction`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulateAuthEntry {
     pub xdr: String,
 }
 
-/// Resource cost estimates returned by `simulateTransaction`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulateCost {
     #[serde(rename = "cpuInsns", default)]
@@ -60,7 +38,6 @@ pub struct SimulateCost {
     pub mem_bytes: String,
 }
 
-/// Soroban resource limits and fees returned by `simulateTransaction`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulateSorobanData {
     pub data: String,
@@ -68,7 +45,6 @@ pub struct SimulateSorobanData {
     pub min_resource_fee: String,
 }
 
-/// Typed response from the `simulateTransaction` RPC method.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulateTransactionResponse {
     #[serde(rename = "latestLedger")]
@@ -89,7 +65,6 @@ pub struct SimulateTransactionResponse {
     pub cost: Option<SimulateCost>,
 }
 
-/// Invocations result in a `simulateTransaction` response.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulateResult {
     #[serde(default)]
@@ -108,16 +83,14 @@ impl SimulateTransactionResponse {
     }
 }
 
-/// Primary entry point for Soroban network communication.
 #[derive(Debug, Clone)]
 pub struct SorobanRpcClient {
-    /// HTTP client instance.
+
     client: reqwest::Client,
-    /// Soroban RPC endpoint URL.
+
     rpc_url: String,
 }
 
-/// Transaction status in Soroban.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TransactionStatus {
@@ -126,7 +99,6 @@ pub enum TransactionStatus {
     Failed,
 }
 
-/// Response for the `getTransaction` RPC method.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetTransactionResponse {
@@ -145,9 +117,7 @@ pub struct GetTransactionResponse {
 }
 
 impl SorobanRpcClient {
-    /// Create a new `SorobanRpcClient` from a [`NetworkConfig`].
-    ///
-    /// Initialises a [`reqwest::Client`] matching the config's timeout or defaults to 30s.
+
     pub fn new(config: &NetworkConfig) -> Self {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
@@ -165,7 +135,6 @@ impl SorobanRpcClient {
         }
     }
 
-    /// Update the timeout for the client in seconds.
     pub fn with_timeout(mut self, timeout_secs: u64) -> Self {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
@@ -178,29 +147,11 @@ impl SorobanRpcClient {
         self
     }
 
-    /// Fetch a transaction by hash.
     pub async fn get_transaction(&self, tx_hash: &str) -> PrismResult<GetTransactionResponse> {
         let params = serde_json::json!([tx_hash]);
         self.call("getTransaction", params).await
     }
 
-    /// Simulate a transaction against the current ledger state.
-    ///
-    /// Fires the `simulateTransaction` JSON-RPC method and returns a typed
-    /// [`SimulateTransactionResponse`] containing:
-    /// - `soroban_data` — the `SorobanTransactionData` XDR to stamp onto the
-    ///   transaction before submission (footprint + resource limits).
-    /// - `min_resource_fee` — the minimum fee in stroops required.
-    /// - `auth` — authorization entries that must be signed by the relevant
-    ///   parties before the transaction is submitted.
-    /// - `results` — per-invocation return values.
-    ///
-    /// If the node returns an `error` field the method returns
-    /// [`PrismError::RpcError`] so callers can surface the simulation failure
-    /// without having to inspect the raw JSON.
-    ///
-    /// # Arguments
-    /// * `tx_xdr` — base64-encoded XDR of the unsigned `TransactionEnvelope`.
     pub async fn simulate_transaction(
         &self,
         tx_xdr: &str,
@@ -223,14 +174,12 @@ impl SorobanRpcClient {
         Ok(response)
     }
 
-    /// Fetch ledger entries by their XDR keys.
     pub async fn get_ledger_entries(&self, keys: &[String]) -> PrismResult<serde_json::Value> {
         let params = serde_json::json!({ "keys": keys });
         self.call::<serde_json::Value>("getLedgerEntries", params)
             .await
     }
 
-    /// Query events starting from `start_ledger` with the given filters.
     pub async fn get_events(
         &self,
         start_ledger: u32,
@@ -243,19 +192,10 @@ impl SorobanRpcClient {
         self.call("getEvents", params).await
     }
 
-    /// Return the latest ledger info from the RPC node.
     pub async fn get_latest_ledger(&self) -> PrismResult<serde_json::Value> {
         self.call("getLatestLedger", serde_json::json!({})).await
     }
 
-    /// Internal JSON-RPC call with retry and backoff.
-    ///
-    /// Retries are triggered by:
-    /// - Transport-level failures (connection refused, timeout, etc.)
-    /// - HTTP 429 Too Many Requests
-    /// - HTTP 5xx Server Errors (500–599)
-    ///
-    /// Backoff follows `BASE_DELAY_MS × 2^attempt`, capped at `MAX_DELAY_MS`.
     async fn call<T: for<'de> Deserialize<'de>>(
         &self,
         method: &'static str,
@@ -463,10 +403,6 @@ mod tests {
         SorobanRpcClient::new(&config)
     }
 
-    // -------------------------------------------------------------------------
-    // backoff_duration — pure unit tests, no I/O
-    // -------------------------------------------------------------------------
-
     #[test]
     fn backoff_increases_exponentially() {
         assert_eq!(backoff_duration(1), Duration::from_millis(200));
@@ -479,9 +415,9 @@ mod tests {
 
     #[test]
     fn backoff_is_capped_at_max_delay() {
-        // attempt 7 → raw = 100 × 128 = 12 800 ms → clamped to MAX_DELAY_MS
+
         assert_eq!(backoff_duration(7), Duration::from_millis(MAX_DELAY_MS));
-        // Very large attempt must not overflow u64
+
         assert_eq!(backoff_duration(63), Duration::from_millis(MAX_DELAY_MS));
     }
 
@@ -489,10 +425,6 @@ mod tests {
     fn backoff_attempt_zero_returns_base_delay() {
         assert_eq!(backoff_duration(0), Duration::from_millis(BASE_DELAY_MS));
     }
-
-    // -------------------------------------------------------------------------
-    // Deserialisation tests (kept from original upstream suite)
-    // -------------------------------------------------------------------------
 
     #[test]
     fn get_transaction_response_deserializes() {
@@ -669,11 +601,6 @@ mod tests {
         assert_eq!(result.ledger, Some(650));
     }
 
-    // -------------------------------------------------------------------------
-    // Retry / backoff integration tests — real TCP, no extra deps
-    // -------------------------------------------------------------------------
-
-    /// One 500 followed by a 200 — should succeed on the second attempt.
     #[tokio::test]
     async fn retries_once_on_500_then_succeeds() {
         let responses = vec![
@@ -685,7 +612,6 @@ mod tests {
         assert!(result.is_ok(), "Expected success after retry, got: {result:?}");
     }
 
-    /// Persistent 500 — client exhausts all 3 retries (4 total attempts) and errors.
     #[tokio::test]
     async fn exhausts_retries_on_persistent_500() {
         let responses = vec![
@@ -704,7 +630,6 @@ mod tests {
         );
     }
 
-    /// 503 Service Unavailable is retried (another common transient 5xx).
     #[tokio::test]
     async fn retries_on_503_service_unavailable() {
         let responses = vec![
@@ -717,7 +642,6 @@ mod tests {
         assert!(result.is_ok(), "Expected success after retrying 503s, got: {result:?}");
     }
 
-    /// 502 Bad Gateway is a 5xx and must be retried.
     #[tokio::test]
     async fn retries_on_502_bad_gateway() {
         let responses = vec![
@@ -729,7 +653,6 @@ mod tests {
         assert!(result.is_ok(), "Expected success after retrying 502, got: {result:?}");
     }
 
-    /// 429 Too Many Requests — pre-existing behaviour must be preserved.
     #[tokio::test]
     async fn retries_on_429_rate_limit() {
         let responses = vec![
@@ -741,21 +664,18 @@ mod tests {
         assert!(result.is_ok(), "Expected success after retrying 429, got: {result:?}");
     }
 
-    /// A 4xx client error (400) is NOT retried — it is a permanent caller error.
     #[tokio::test]
     async fn does_not_retry_on_4xx_client_error() {
-        // Return only one response; if the client retried it would get a stale
-        // connection / empty response and produce a different error.
+
         let bad_body =
             r#"{"jsonrpc":"2.0","id":1,"error":{"code":-32600,"message":"Invalid request"}}"#;
         let responses = vec![http_response(400, "Bad Request", bad_body)];
         let addr = spawn_mock_server(responses).await;
         let result = make_client(addr).get_latest_ledger().await;
-        // The client should return an error immediately, not after retries.
+
         assert!(result.is_err(), "Expected error for 4xx response");
     }
 
-    /// A JSON-RPC error inside a 200 is returned immediately without retry.
     #[tokio::test]
     async fn returns_immediately_on_jsonrpc_error_in_200() {
         let rpc_err =
@@ -769,10 +689,6 @@ mod tests {
             "Error should propagate the JSON-RPC error message"
         );
     }
-
-    // -------------------------------------------------------------------------
-    // Existing integration tests (kept from upstream)
-    // -------------------------------------------------------------------------
 
     #[tokio::test]
     async fn test_get_ledger_entries_empty_response() {

@@ -1,7 +1,4 @@
-//! XDR codec - thin wrapper over `stellar-xdr` with convenience methods.
-//!
-//! Handles serialization/deserialization of transaction envelopes, results,
-//! ledger entries, SCVal, and SCSpecEntry types.
+
 
 use crate::error::{PrismError, PrismResult};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
@@ -10,9 +7,8 @@ use stellar_xdr::curr::{
     WriteXdr, TransactionResult,
 };
 
-/// Uniform base64-XDR encode/decode interface for Stellar XDR types.
 pub trait XdrCodec: Sized {
-    /// The short name used in error messages (e.g. `"TransactionMeta"`).
+
     const TYPE_NAME: &'static str;
 
     /// Decode from XDR bytes.
@@ -33,7 +29,6 @@ pub trait XdrCodec: Sized {
         Ok(encode_xdr_base64(&bytes))
     }
 }
-
 
 impl XdrCodec for TransactionMeta {
     const TYPE_NAME: &'static str = "TransactionMeta";
@@ -149,7 +144,6 @@ impl XdrCodec for ScVec {
     }
 }
 
-
 /// Decode a base64-encoded XDR string to raw bytes.
 pub fn decode_xdr_base64(xdr_base64: &str) -> PrismResult<Vec<u8>> {
     STANDARD.decode(xdr_base64).map_err(|e| {
@@ -166,19 +160,18 @@ pub fn encode_xdr_base64(bytes: &[u8]) -> String {
 pub fn decode_tx_hash(hash_hex: &str) -> PrismResult<[u8; 32]> {
     let bytes = hex_decode(hash_hex)
         .map_err(|e| PrismError::XdrError(format!("Invalid tx hash hex: {e}")))?;
-    
+
     if bytes.len() != 32 {
         return Err(PrismError::XdrError(format!(
             "Transaction hash must be 32 bytes, got {}",
             bytes.len()
         )));
     }
-    
+
     let mut arr = [0u8; 32];
     arr.copy_from_slice(&bytes);
     Ok(arr)
 }
-
 
 fn hex_decode(input: &str) -> Result<Vec<u8>, String> {
     if !input.len().is_multiple_of(2) {
@@ -193,7 +186,6 @@ fn hex_decode(input: &str) -> Result<Vec<u8>, String> {
         })
         .collect()
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -275,10 +267,10 @@ mod tests {
     fn test_transaction_result_round_trip() {
         let xdr_bytes = vec![0u8; 20];
         let bytes = encode_xdr_base64(&xdr_bytes);
-        
+
         let decoded = <TransactionResult as crate::xdr::codec::XdrCodec>::from_xdr_base64(&bytes).expect("decode");
         let encoded = crate::xdr::codec::XdrCodec::to_xdr_base64(&decoded).expect("encode");
-        
+
         assert_eq!(bytes, encoded);
     }
 

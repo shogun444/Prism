@@ -1,7 +1,4 @@
-//! Contract-specific error resolver.
-//!
-//! Fetches WASM bytecode from the ledger, parses contractspecv0 metadata,
-//! and maps numeric error codes to named enum variants.
+
 
 use crate::error::{PrismError, PrismResult};
 use crate::spec::decoder;
@@ -9,13 +6,6 @@ use crate::types::address::Address;
 use crate::types::config::NetworkConfig;
 use crate::types::report::ContractErrorInfo;
 
-/// Resolve a contract-specific error code to its named variant.
-///
-/// # Process
-/// 1. Fetch the contract's WASM bytecode from the ledger
-/// 2. Parse the `contractspecv0` metadata from WASM custom sections
-/// 3. Find the error enum definition  
-/// 4. Map the numeric code to the variant name and doc comment
 pub async fn resolve(
     contract_id: &str,
     error_code: u32,
@@ -52,7 +42,6 @@ pub async fn resolve(
     })
 }
 
-/// Fetch a contract's WASM bytecode from the Soroban RPC.
 async fn fetch_contract_wasm(contract_id: &str, network: &NetworkConfig) -> PrismResult<Vec<u8>> {
     let rpc = crate::rpc::SorobanRpcClient::new(network);
 

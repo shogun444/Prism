@@ -1,11 +1,10 @@
-//! State differ — compares ledger state before and after transaction execution.
+
 
 use crate::replay::sandbox::SandboxResult;
 use crate::replay::state::LedgerState;
 use crate::error::PrismResult;
 use crate::types::trace::{DiffChangeType, LedgerEntryDiff, StateDiff};
 
-/// Compute the state diff between pre-execution and post-execution ledger states.
 pub fn compute_diff(pre_state: &LedgerState, result: &SandboxResult) -> PrismResult<StateDiff> {
     let mut entries = Vec::new();
 

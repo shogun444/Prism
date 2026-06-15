@@ -1,37 +1,29 @@
-//! Historical state reconstruction.
-//!
-//! Two-path strategy:
-//! - **Hot path:** Use Soroban RPC `getLedgerEntries` for recent transactions (last ~50k ledgers)
-//! - **Cold path:** Fall back to Stellar History Archives for older transactions
+
 
 use crate::types::config::NetworkConfig;
 use crate::error::{PrismError, PrismResult};
 use std::collections::HashMap;
 
-/// Reconstructed ledger state at a specific sequence number.
 #[derive(Debug, Clone)]
 pub struct LedgerState {
-    /// Ledger sequence number.
+
     pub ledger_sequence: u32,
-    /// Reconstructed ledger entries keyed by their ledger key.
+
     pub entries: HashMap<String, Vec<u8>>,
-    /// Whether this state was reconstructed from the hot or cold path.
+
     pub reconstruction_path: ReconstructionPath,
 }
 
-/// How the state was reconstructed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReconstructionPath {
-    /// Via Soroban RPC (recent transaction).
+
     HotPath,
-    /// Via History Archives + Captive Core (older transaction).
+
     ColdPath,
 }
 
-/// The hot path threshold — transactions within this many ledgers use the RPC directly.
 const HOT_PATH_THRESHOLD: u32 = 50_000;
 
-/// Reconstruct ledger state at the time of a transaction.
 pub async fn reconstruct_state(tx_hash: &str, network: &NetworkConfig) -> PrismResult<LedgerState> {
     let rpc = crate::rpc::SorobanRpcClient::new(network);
 
@@ -57,7 +49,6 @@ pub async fn reconstruct_state(tx_hash: &str, network: &NetworkConfig) -> PrismR
     }
 }
 
-/// Hot path: reconstruct state from Soroban RPC.
 async fn reconstruct_hot_path(
     ledger_sequence: u32,
     _rpc: &crate::rpc::SorobanRpcClient,
@@ -69,7 +60,6 @@ async fn reconstruct_hot_path(
     })
 }
 
-/// Cold path: reconstruct state from Stellar History Archives.
 async fn reconstruct_cold_path(
     ledger_sequence: u32,
     _network: &NetworkConfig,

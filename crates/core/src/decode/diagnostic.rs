@@ -1,18 +1,10 @@
-//! Diagnostic event analyzer.
-//!
-//! Processes diagnostic events from transaction results to extract additional
-//! context such as which budget category was exceeded, which auth check failed,
-//! or which storage key was inaccessible.
+
 
 use crate::error::PrismResult;
 use crate::types::report::{DiagnosticReport, RootCause, SuggestedFix};
 use crate::xdr::codec::XdrCodec;
 use stellar_xdr::curr::{DiagnosticEvent, ContractEventBody, ScVal};
 
-/// Enrich a diagnostic report with information from diagnostic events.
-///
-/// Diagnostic events are internal host events that reveal execution internals
-/// beyond what the top-level error code provides.
 pub fn enrich_report(
     report: &mut DiagnosticReport,
     tx_data: &serde_json::Value,
@@ -49,7 +41,6 @@ fn analyze_diagnostic_event(report: &mut DiagnosticReport, event: &DiagnosticEve
             return;
         }
 
-        // Check for budget events
         if topics.iter().any(|t| t.to_lowercase().contains("budget") || t.to_lowercase().contains("limit")) {
             if !report.root_causes.iter().any(|c| c.description.contains("Resource limit")) {
                 report.root_causes.push(RootCause {
@@ -69,7 +60,6 @@ fn analyze_diagnostic_event(report: &mut DiagnosticReport, event: &DiagnosticEve
             }
         }
 
-        // Check for storage events
         if topics.iter().any(|t| t.to_lowercase().contains("storage") || t.to_lowercase().contains("footprint")) {
             if !report.root_causes.iter().any(|c| c.description.contains("footprint")) {
                 report.root_causes.push(RootCause {
@@ -89,7 +79,6 @@ fn analyze_diagnostic_event(report: &mut DiagnosticReport, event: &DiagnosticEve
             }
         }
 
-        // Check for auth events
         if topics.iter().any(|t| t.to_lowercase().contains("auth") || t.to_lowercase().contains("signature")) {
             if !report.root_causes.iter().any(|c| c.description.contains("authorization")) {
                 report.root_causes.push(RootCause {
@@ -109,7 +98,6 @@ fn analyze_diagnostic_event(report: &mut DiagnosticReport, event: &DiagnosticEve
             }
         }
 
-        // Append to detailed explanation as context
         let topics_str = topics.join(" > ");
         if !report.detailed_explanation.contains(&topics_str) {
             if report.detailed_explanation.is_empty() {

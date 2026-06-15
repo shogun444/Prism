@@ -1,18 +1,4 @@
-//! # Prism Core
-//!
-//! Core library for the Prism Soroban Transaction Debugger.
-//!
-//! This crate provides:
-//! - **Decode Engine** (Tier 1): Error decoding, contract error resolution, and transaction context enrichment
-//! - **Replay Engine** (Tier 2): Historical state reconstruction and execution replay
-//! - **Debugger** (Tier 3): Interactive stepping, breakpoints, and what-if analysis
-//!
-//! ## Feature Flags
-//! - `decode` (default): Enable Tier 1 decode engine
-//! - `taxonomy` (default): Include the error taxonomy database
-//! - `replay`: Enable Tier 2 replay engine
-//! - `debugger`: Enable Tier 3 interactive debugger (implies `replay`)
-//! - `wasm-compat`: Build for WASM target (disables features requiring native I/O)
+
 
 pub mod archive;
 pub mod cache;
@@ -33,10 +19,8 @@ pub use types::config::NetworkConfig;
 pub use error::{PrismError, PrismResult};
 pub use types::report::DiagnosticReport;
 
-/// Library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Soroban ledger protocol version supported by the linked core crates.
 pub const SOROBAN_PROTOCOL_VERSION: u32 =
     soroban_env_host::meta::get_ledger_protocol_version(soroban_env_host::meta::INTERFACE_VERSION);
 

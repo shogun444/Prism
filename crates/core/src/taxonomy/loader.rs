@@ -1,17 +1,13 @@
-//! Taxonomy database loader.
-//!
-//! Loads TOML taxonomy files from embedded data or disk, indexes them by
-//! (category, code) for O(1) lookup.
+
 
 use crate::taxonomy::schema::{ErrorCategory, TaxonomyEntry, TaxonomySchema};
 use crate::error::{PrismError, PrismResult};
 use std::collections::HashMap;
 
-/// A parser for TOML taxonomy definitions.
 pub struct TaxonomyParser;
 
 impl TaxonomyParser {
-    /// Parses a TOML string into a `TaxonomySchema`.
+
     pub fn parse(input: &str) -> PrismResult<TaxonomySchema> {
         toml::from_str(input).map_err(|e| {
             PrismError::TaxonomyError(format!("TOML parse error: {e}"))
@@ -19,16 +15,15 @@ impl TaxonomyParser {
     }
 }
 
-/// In-memory taxonomy database indexed by (category, code).
 pub struct TaxonomyDatabase {
-    /// Entries indexed by (category, code).
+
     entries: HashMap<(ErrorCategory, u32), TaxonomyEntry>,
-    /// All entries in a flat list.
+
     all_entries: Vec<TaxonomyEntry>,
 }
 
 impl TaxonomyDatabase {
-    /// Load the taxonomy database from the embedded TOML files.
+
     pub fn load_embedded() -> PrismResult<Self> {
         let mut db = Self {
             entries: HashMap::new(),
@@ -67,7 +62,6 @@ impl TaxonomyDatabase {
         Ok(db)
     }
 
-    /// Load the taxonomy database from a directory of TOML files.
     pub fn load_from_dir(dir: &std::path::Path) -> PrismResult<Self> {
         let mut db = Self {
             entries: HashMap::new(),
@@ -100,12 +94,10 @@ impl TaxonomyDatabase {
         Ok(db)
     }
 
-    /// Look up an error by category and code. O(1).
     pub fn lookup(&self, category: &ErrorCategory, code: u32) -> Option<&TaxonomyEntry> {
         self.entries.get(&(category.clone(), code))
     }
 
-    /// Get all entries for a given category.
     pub fn entries_for_category(&self, category: &ErrorCategory) -> Vec<&TaxonomyEntry> {
         self.all_entries
             .iter()
@@ -113,12 +105,10 @@ impl TaxonomyDatabase {
             .collect()
     }
 
-    /// Get the total number of entries in the database.
     pub fn len(&self) -> usize {
         self.entries.len()
     }
 
-    /// Check if the database is empty.
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }

@@ -1,4 +1,4 @@
-//! Address types for Stellar accounts and contracts.
+
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -6,28 +6,24 @@ use stellar_strkey::{ed25519::PublicKey, Contract, Strkey};
 
 use crate::error::{PrismError, PrismResult};
 
-/// Represents a Stellar address (account or contract).
-///
-/// Internally stores the raw bytes, but displays as the standard strkey format.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Address {
-    /// The raw bytes of the address.
+
     pub bytes: Vec<u8>,
-    /// The type of address (for strkey encoding).
+
     pub address_type: AddressType,
 }
 
-/// The type of Stellar address.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AddressType {
-    /// Account public key (starts with 'G').
+
     Account,
-    /// Contract ID (starts with 'C').
+
     Contract,
 }
 
 impl Address {
-    /// Create a new Address from raw bytes.
+
     pub fn new(bytes: Vec<u8>, address_type: AddressType) -> Self {
         Self {
             bytes,
@@ -35,7 +31,6 @@ impl Address {
         }
     }
 
-    /// Create an Address from a strkey string.
     pub fn from_strkey(strkey: &str) -> Result<Self, String> {
         if let Ok(contract) = Contract::from_string(strkey) {
             Ok(Self {
@@ -52,10 +47,6 @@ impl Address {
         }
     }
 
-    /// Instantiate an Address from raw user input with immediate validation.
-    ///
-    /// This method uses `stellar_strkey::Strkey` to ensure the input is a valid
-    /// account public key or contract ID.
     pub fn from_string(s: &str) -> PrismResult<Self> {
         let strkey = Strkey::from_string(s)
             .map_err(|e| PrismError::InvalidAddress(format!("Failed to parse strkey: {e}")))?;
@@ -75,11 +66,6 @@ impl Address {
         }
     }
 
-    /// Validate that a string is a Soroban contract ID.
-    ///
-    /// A valid contract ID must:
-    /// - Start with an uppercase `C` prefix
-    /// - Be a valid Stellar contract strkey payload and checksum
     pub fn validate_contract_id(contract_id: &str) -> PrismResult<()> {
         if !contract_id.starts_with('C') {
             return Err(PrismError::InvalidAddress(
@@ -94,7 +80,6 @@ impl Address {
         Ok(())
     }
 
-    /// Instantiate a contract [`Address`] from a validated contract ID string.
     pub fn from_contract_id(contract_id: &str) -> PrismResult<Self> {
         Self::validate_contract_id(contract_id)?;
         let contract = Contract::from_string(contract_id).map_err(|e| {
@@ -107,7 +92,6 @@ impl Address {
         })
     }
 
-    /// Convert to strkey string.
     pub fn to_strkey(&self) -> String {
         match self.address_type {
             AddressType::Account => {

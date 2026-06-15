@@ -1,14 +1,13 @@
-//! `prism replay` — Launch interactive TUI debugger.
+
 
 use clap::Args;
 use prism_core::types::config::NetworkConfig;
 
 #[derive(Args)]
 pub struct ReplayArgs {
-    /// Transaction hash to replay interactively.
+
     pub tx_hash: String,
 
-    /// Enable interactive mode (TUI).
     #[arg(long, short)]
     pub interactive: bool,
 }

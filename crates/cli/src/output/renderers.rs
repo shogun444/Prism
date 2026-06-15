@@ -1,4 +1,4 @@
-//! Shared terminal renderers for CLI output.
+
 
 #![allow(dead_code)]
 
@@ -11,27 +11,22 @@ use crate::output::theme::ColorPalette;
 const BAR_WIDTH: usize = 10;
 const HEAT_BLOCKS: [&str; 4] = ["░", "▒", "▓", "█"];
 
-/// Render a boxed section header suitable for terminal report sections.
 pub fn render_section_header(title: &str) -> String {
     SectionHeader::new(title).render()
 }
 
-/// Render an error card to display transaction errors prominently.
 pub fn render_error_card(report: &DiagnosticReport) -> String {
     ErrorCard::new(report).render()
 }
 
-/// Render a list of suggested fixes.
 pub fn render_fix_list(fixes: &[prism_core::types::report::SuggestedFix]) -> String {
     FixList::new(fixes).render()
 }
 
-/// Render a state diff table comparing old and new values.
 pub fn render_state_diff_table(diff: &prism_core::types::trace::StateDiff) -> String {
     StateDiffTable::new(diff).render()
 }
 
-/// Utility for rendering a clearly separated section heading.
 pub struct SectionHeader<'a> {
     title: &'a str,
 }
@@ -98,7 +93,6 @@ impl<'a> ErrorCard<'a> {
     }
 }
 
-/// Renders a bulleted list of suggested fixes with fix IDs.
 pub struct FixList<'a> {
     fixes: &'a [prism_core::types::report::SuggestedFix],
 }

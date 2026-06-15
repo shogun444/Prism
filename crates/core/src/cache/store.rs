@@ -1,21 +1,17 @@
-//! Content-addressed cache store.
-//!
-//! Uses `redb` as an embedded key-value database for fast, zero-config
-//! local caching of WASM blobs, parsed contractspecs, and historical ledger entries.
+
 
 use crate::error::{PrismError, PrismResult};
 use std::path::PathBuf;
 
-/// Cache entry categories.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CacheCategory {
-    /// Raw WASM contract bytecode.
+
     WasmBlob,
-    /// Parsed contract specifications.
+
     ContractSpec,
-    /// Historical ledger entries.
+
     LedgerEntry,
-    /// Decoded transaction results.
+
     TransactionResult,
 }
 

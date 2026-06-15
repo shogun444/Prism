@@ -1,10 +1,9 @@
-//! Human-readable colored terminal output formatter.
+
 
 use prism_core::types::report::DiagnosticReport;
 
 use crate::output::renderers::{render_section_header, render_error_card, render_fix_list, BudgetBar};
 
-/// Print a diagnostic report in human-readable colored format.
 pub fn print_report(report: &DiagnosticReport) -> anyhow::Result<()> {
     println!("{}", render_error_card(report));
     println!();

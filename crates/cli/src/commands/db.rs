@@ -1,4 +1,4 @@
-//! `prism db` — Manage the error taxonomy database.
+
 
 use anyhow::{Context, Result};
 use clap::{Args, Subcommand};
@@ -14,13 +14,13 @@ pub struct DbArgs {
 
 #[derive(Subcommand)]
 pub enum DbCommands {
-    /// Update the taxonomy database to the latest version.
+
     Update,
-    /// Show taxonomy database statistics.
+
     Stats,
-    /// Search the taxonomy for an error.
+
     Search {
-        /// Search query (error name, category, or keyword).
+
         query: String,
     },
 }
@@ -63,7 +63,6 @@ pub async fn run(args: DbArgs, output_format: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Update the taxonomy database from GitHub releases.
 async fn update_taxonomy_database(output_format: &str) -> Result<()> {
     if matches!(
         crate::output::OutputFormat::parse(output_format),
@@ -114,7 +113,6 @@ async fn update_taxonomy_database(output_format: &str) -> Result<()> {
     Ok(())
 }
 
-/// Get the local data directory for storing taxonomy files.
 fn get_local_data_dir() -> Result<PathBuf> {
     let dirs = directories::ProjectDirs::from("com", "toolbox-lab", "prism")
         .context("Failed to determine project directories")?;

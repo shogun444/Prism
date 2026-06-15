@@ -1,11 +1,11 @@
-//! `prism diff` - Show state diff (before/after) for a transaction.
+
 
 use clap::Args;
 use prism_core::types::config::NetworkConfig;
 
 #[derive(Args)]
 pub struct DiffArgs {
-    /// Transaction hash to diff.
+
     #[arg(value_name = "TX_HASH")]
     pub tx_hash: String,
 }

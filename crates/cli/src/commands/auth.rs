@@ -1,4 +1,4 @@
-//! `prism login` and `prism logout` — Manage API credentials for hosted services.
+
 
 use anyhow::{anyhow, Result};
 use clap::{Args, Subcommand};
@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-/// Arguments for the auth command.
 #[derive(Args)]
 pub struct AuthArgs {
     #[command(subcommand)]
@@ -17,37 +16,32 @@ pub struct AuthArgs {
 
 #[derive(Subcommand)]
 pub enum AuthCommands {
-    /// Store API credentials for a provider.
+
     Login {
-        /// Provider name (Blockdaemon, NowNodes, or custom).
+
         #[arg(long)]
         provider: Option<String>,
 
-        /// Override the default config file location.
         #[arg(long)]
         config_path: Option<String>,
     },
-    /// Remove stored API credentials for a provider.
+
     Logout {
-        /// Provider name to remove credentials for.
+
         #[arg(long)]
         provider: Option<String>,
 
-        /// Override the default config file location.
         #[arg(long)]
         config_path: Option<String>,
     },
 }
 
-/// Configuration file structure for credential storage.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[derive(Default)]
 struct AuthConfig {
     credentials: std::collections::HashMap<String, String>,
 }
 
-
-/// Execute the auth command.
 pub async fn run(args: AuthArgs, output_format: &str) -> Result<()> {
     match args.command {
         AuthCommands::Login {
@@ -61,7 +55,6 @@ pub async fn run(args: AuthArgs, output_format: &str) -> Result<()> {
     }
 }
 
-/// Handle the login subcommand.
 async fn login(
     provider_param: Option<String>,
     config_path: Option<String>,
@@ -114,7 +107,6 @@ async fn login(
     Ok(())
 }
 
-/// Handle the logout subcommand.
 async fn logout(
     provider_param: Option<String>,
     config_path: Option<String>,
@@ -175,7 +167,6 @@ async fn logout(
     Ok(())
 }
 
-/// Interactively select a provider from known options.
 fn select_provider_interactive() -> Result<String> {
     let items = vec!["Blockdaemon", "NowNodes", "Custom"];
     let selection = Select::new()
@@ -197,7 +188,6 @@ fn select_provider_interactive() -> Result<String> {
     }
 }
 
-/// Interactively select a provider for logout (including those with stored credentials).
 fn select_provider_for_logout() -> Result<String> {
     let mut items: Vec<String> = vec![
         "Blockdaemon".to_string(),
@@ -232,8 +222,6 @@ fn select_provider_for_logout() -> Result<String> {
     }
 }
 
-/// Store a credential using config file storage.
-/// Note: This is less secure than keyring storage but keyring caused dependency conflicts.
 async fn store_credential(
     provider: &str,
     api_key: &str,
@@ -244,8 +232,6 @@ async fn store_credential(
     store_credential_config(&normalized_provider, api_key, config_path).await
 }
 
-/// Store credential in config file.
-/// Note: This is less secure than keyring storage but keyring caused dependency conflicts.
 async fn store_credential_config(
     provider: &str,
     api_key: &str,
@@ -271,7 +257,6 @@ async fn store_credential_config(
     Ok(())
 }
 
-/// Remove a credential from config file.
 async fn remove_credential(provider: &str, config_path: Option<String>) -> Result<bool> {
     let normalized_provider = normalize_provider_name(provider);
 
@@ -290,7 +275,6 @@ async fn remove_credential(provider: &str, config_path: Option<String>) -> Resul
     Ok(false)
 }
 
-/// Retrieve a credential from config file.
 #[allow(dead_code)]
 pub fn get_credential(provider: &str) -> Result<Option<String>> {
     let normalized_provider = normalize_provider_name(provider);
@@ -298,7 +282,6 @@ pub fn get_credential(provider: &str) -> Result<Option<String>> {
     get_credential_config(&normalized_provider)
 }
 
-/// Get credential from config file.
 #[allow(dead_code)]
 fn get_credential_config(provider: &str) -> Result<Option<String>> {
     let config_file = get_config_path(None)?;
@@ -306,7 +289,6 @@ fn get_credential_config(provider: &str) -> Result<Option<String>> {
     Ok(config.credentials.get(provider).cloned())
 }
 
-/// Load auth configuration from file.
 fn load_auth_config(config_file: Option<&PathBuf>) -> Result<AuthConfig> {
     let default_path;
     let config_file = if let Some(p) = config_file { p } else {
@@ -325,7 +307,6 @@ fn load_auth_config(config_file: Option<&PathBuf>) -> Result<AuthConfig> {
     Ok(config)
 }
 
-/// Save auth configuration to file.
 async fn save_auth_config(config: &AuthConfig, config_file: &PathBuf) -> Result<()> {
     if let Some(parent) = config_file.parent() {
         fs::create_dir_all(parent)?;
@@ -339,7 +320,6 @@ async fn save_auth_config(config: &AuthConfig, config_file: &PathBuf) -> Result<
     Ok(())
 }
 
-/// Get the config file path.
 fn get_config_path(override_path: Option<String>) -> Result<PathBuf> {
     if let Some(path) = override_path {
         return Ok(PathBuf::from(path));
@@ -351,7 +331,6 @@ fn get_config_path(override_path: Option<String>) -> Result<PathBuf> {
     Ok(project_dirs.config_dir().join("auth.toml"))
 }
 
-/// Normalize provider name for storage (lowercase, spaces to hyphens).
 fn normalize_provider_name(provider: &str) -> String {
     provider.to_lowercase().replace(' ', "-")
 }

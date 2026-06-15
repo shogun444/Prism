@@ -1,14 +1,13 @@
-//! `prism whatif` - Re-simulate with modified inputs.
+
 
 use clap::Args;
 use prism_core::types::config::NetworkConfig;
 
 #[derive(Args)]
 pub struct WhatifArgs {
-    /// Transaction hash to re-simulate.
+
     pub tx_hash: String,
 
-    /// Path to a JSON patch file with modifications.
     #[arg(long)]
     pub modify: Option<String>,
 }

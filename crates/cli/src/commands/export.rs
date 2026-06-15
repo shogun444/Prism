@@ -1,18 +1,16 @@
-//! `prism export` — Export debug session as a regression test.
+
 
 use clap::Args;
 use prism_core::types::config::NetworkConfig;
 
 #[derive(Args)]
 pub struct ExportArgs {
-    /// Transaction hash to export.
+
     pub tx_hash: String,
 
-    /// Export format: test, json.
     #[arg(long, default_value = "test")]
     pub format: String,
 
-    /// Output file path.
     #[arg(long, short)]
     pub output: Option<String>,
 }
@@ -29,7 +27,6 @@ pub async fn run(
             args.tx_hash, network.network, args.format
         );
     }
-
 
     let output_path = args.output.unwrap_or_else(|| {
         format!(

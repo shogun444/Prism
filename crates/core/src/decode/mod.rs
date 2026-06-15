@@ -1,7 +1,4 @@
-//! Tier 1: Error Decode Engine.
-//!
-//! Provides error classification, contract error resolution, diagnostic event
-//! analysis, context enrichment, and report generation.
+
 
 pub mod context;
 pub mod contract_error;
@@ -13,7 +10,6 @@ pub mod report;
 use crate::error::PrismResult;
 use crate::types::report::DiagnosticReport;
 
-/// Filter transaction data to focus on a specific operation index.
 fn filter_transaction_by_operation(
     tx_data: &mut serde_json::Value,
     op_index: usize,
@@ -45,9 +41,6 @@ fn filter_transaction_by_operation(
     Ok(())
 }
 
-/// Decode a transaction error from its hash, returning a full diagnostic report.
-///
-/// This is the main entry point for Tier 1 functionality.
 pub async fn decode_transaction(
     tx_hash: &str,
     network: &crate::types::config::NetworkConfig,
@@ -55,8 +48,6 @@ pub async fn decode_transaction(
     decode_transaction_with_op_filter(tx_hash, network, None).await
 }
 
-/// Decode a transaction error from its hash, returning a full diagnostic report.
-/// Optionally filter to focus on a specific operation index.
 pub async fn decode_transaction_with_op_filter(
     tx_hash: &str,
     network: &crate::types::config::NetworkConfig,

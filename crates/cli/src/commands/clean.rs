@@ -1,4 +1,4 @@
-//! `prism clean` — Clear local Prism cache data.
+
 
 use clap::Args;
 use std::fs;

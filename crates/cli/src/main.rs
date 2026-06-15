@@ -1,31 +1,4 @@
-//! Prism CLI — Soroban Transaction Debugger
-//!
-//! Usage:
-//!   prism decode <tx-hash>       — Decode a transaction error
-//!   prism inspect <tx-hash>      — Full transaction context
-//!   prism trace <tx-hash>        — Replay and trace execution
-//!   prism profile <tx-hash>      — Resource consumption profile
-//!   prism diff <tx-hash>         — State diff (before/after)
-//!   prism replay <tx-hash> -i    — Interactive TUI debugger
-//!   prism whatif <tx-hash>       — Re-simulate with modifications
-//!   prism export <tx-hash>       — Export as regression test
-//!   prism db update              — Update taxonomy database
-//!   prism clean                  — Clear local cache data
 
-//! Prism CLI — Soroban Transaction Debugger
-//!
-//! Usage:
-//!   prism decode <tx-hash>       — Decode a transaction error
-//!   prism inspect <tx-hash>      — Full transaction context
-//!   prism trace <tx-hash>        — Replay and trace execution
-//!   prism profile <tx-hash>      — Resource consumption profile
-//!   prism diff <tx-hash>         — State diff (before/after)
-//!   prism replay <tx-hash> -i    — Interactive TUI debugger
-//!   prism whatif <tx-hash>       — Re-simulate with modifications
-//!   prism export <tx-hash>       — Export as regression test
-//!   prism db update              — Update taxonomy database
-//!   prism serve                  — Start WebSocket server for streaming trace updates
-//!   prism clean                  — Clear local cache data
 
 mod commands;
 mod config;
@@ -40,16 +13,14 @@ use url::Url;
 
 const BUILD_HASH: &str = env!("PRISM_BUILD_HASH");
 
-/// Prism — From cryptic error to root cause in one command.
 #[derive(Parser)]
 #[command(name = "prism", version = env!("CARGO_PKG_VERSION"), about, long_about = None)]
 #[command(propagate_version = true)]
 struct Cli {
-    /// Subcommand to execute.
+
     #[command(subcommand)]
     command: Commands,
 
-    /// Output format: human, json, compact, or short.
     #[arg(
         long,
         default_value = "human",
@@ -58,27 +29,21 @@ struct Cli {
     )]
     output: String,
 
-    /// Network: mainnet, testnet, futurenet, or a custom RPC URL.
     #[arg(long, short, default_value = "testnet", global = true)]
     network: String,
 
-    /// Enable verbose logging. Repeat for more detail.
     #[arg(long, short, action = ArgAction::Count, global = true)]
     verbose: u8,
 
-    /// Override RPC URL (e.g. http://localhost:8000)
     #[arg(long, global = true, value_parser = validate_url)]
     rpc_url: Option<String>,
 
-    /// Save analysis output as JSON to the specified file path.
     #[arg(long, global = true, value_name = "PATH")]
     save: Option<String>,
 
-    /// Suppress non-essential output.
     #[arg(long, short, global = true)]
     quiet: bool,
 
-    /// Disable ANSI colors in terminal output.
     #[arg(long, global = true)]
     no_color: bool,
 }
@@ -86,40 +51,40 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     #[command(next_help_heading = "Analysis Commands")]
-    /// Decode a transaction error into plain English.
+
     Decode(commands::decode::DecodeArgs),
-    /// Inspect full transaction context.
+
     Inspect(commands::inspect::InspectArgs),
-    /// Replay transaction and output execution trace.
+
     Trace(commands::trace::TraceArgs),
-    /// Generate resource consumption profile.
+
     Profile(commands::profile::ProfileArgs),
-    /// Show state diff (before/after) for a transaction.
+
     Diff(commands::diff::DiffArgs),
 
     #[command(next_help_heading = "Debug & TUI Commands")]
-    /// Launch interactive TUI debugger.
+
     Replay(commands::replay::ReplayArgs),
-    /// Re-simulate with modified inputs.
+
     Whatif(commands::whatif::WhatifArgs),
-    /// Export debug session as a regression test.
+
     Export(commands::export::ExportArgs),
 
     #[command(next_help_heading = "System & Data Commands")]
-    /// Manage the error taxonomy database.
+
     Db(commands::db::DbArgs),
-    /// Clear local cache data.
+
     Clean(commands::clean::CleanArgs),
-    /// Manage API credentials for hosted services.
+
     Auth(commands::auth::AuthArgs),
-    /// Run health and connectivity diagnostics.
+
     Diagnostic(commands::diagnostic::DiagnosticArgs),
-    /// Generate shell completion scripts.
+
     Completions {
-        /// The shell to generate completions for.
+
         shell: clap_complete::Shell,
     },
-    /// Start the instrumentation server.
+
     Serve(commands::serve::ServeArgs),
 }
 

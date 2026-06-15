@@ -1,4 +1,4 @@
-//! `prism diagnostic` — Health check for binary, network, and cache state.
+
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -7,15 +7,13 @@ use anyhow::Result;
 use directories::ProjectDirs;
 use crate::output::theme::ColorPalette;
 
-
 #[derive(clap::Args)]
 #[command(about = "Check binary health, network connectivity, and cache state.")]
 pub struct DiagnosticArgs {
-    /// Only show warnings and errors (suppress OK lines).
+
     #[arg(long, short)]
     pub quiet: bool,
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 enum Status {
@@ -50,7 +48,6 @@ impl Status {
     }
 }
 
-
 struct Check {
     name: String,
     status: Status,
@@ -78,7 +75,6 @@ impl Check {
         }
     }
 }
-
 
 fn check_binary_version() -> Check {
     let version = env!("CARGO_PKG_VERSION");
@@ -253,7 +249,6 @@ fn dir_size_mib(path: &PathBuf) -> Result<u64> {
     Ok(total / (1024 * 1024))
 }
 
-
 fn print_report(checks: &[Check], quiet: bool) {
     let palette = ColorPalette::default();
     let sep = "─".repeat(58);
@@ -293,7 +288,6 @@ fn print_report(checks: &[Check], quiet: bool) {
     }
 }
 
-
 pub async fn run(args: DiagnosticArgs) -> Result<()> {
     let palette = ColorPalette::default();
     println!("{}", palette.muted_text("Running diagnostics..."));
@@ -312,7 +306,6 @@ pub async fn run(args: DiagnosticArgs) -> Result<()> {
 
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {

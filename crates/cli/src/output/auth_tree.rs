@@ -1,7 +1,6 @@
 use prism_core::types::trace::{ContractInvocation, ExecutionTrace};
 use std::fmt::Write;
 
-/// Icons for different auth types and states
 mod icons {
     pub const CONTRACT: &str = "📄";
     pub const FUNCTION: &str = "⚡";
@@ -13,7 +12,6 @@ mod icons {
     pub const SUCCESS: &str = "✨";
 }
 
-/// Unicode box-drawing characters
 #[allow(dead_code)]
 mod box_chars {
     pub const VERTICAL: &str = "│";
@@ -23,7 +21,6 @@ mod box_chars {
     pub const VERTICAL_RIGHT: &str = "├";
 }
 
-/// Render authorization tree for a contract invocation
 pub fn render_auth_tree(trace: &ExecutionTrace) -> anyhow::Result<String> {
     let mut output = String::new();
 
@@ -44,7 +41,6 @@ pub fn render_auth_tree(trace: &ExecutionTrace) -> anyhow::Result<String> {
     Ok(output)
 }
 
-/// Render a single contract invocation and its sub-invocations as a tree
 fn render_invocation(
     output: &mut String,
     invocation: &ContractInvocation,
@@ -149,7 +145,6 @@ fn render_invocation(
     Ok(())
 }
 
-/// Render a simplified auth tree focusing only on authorization structure
 pub fn render_auth_only(trace: &ExecutionTrace) -> anyhow::Result<String> {
     let mut output = String::new();
 
@@ -165,7 +160,6 @@ pub fn render_auth_only(trace: &ExecutionTrace) -> anyhow::Result<String> {
     Ok(output)
 }
 
-/// Render only the authorization aspects of an invocation
 fn render_auth_invocation(
     output: &mut String,
     invocation: &ContractInvocation,

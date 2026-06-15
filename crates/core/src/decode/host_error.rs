@@ -1,8 +1,4 @@
-//! Host error types.
-//!
-//! `HostError` is the central type the decode engine works with. It covers
-//! every Soroban host error category, contract-specific errors, and an
-//! `Unknown` variant for forward compatibility.
+
 
 use serde::Serialize;
 use stellar_xdr::curr::{
@@ -14,7 +10,6 @@ use crate::error::{PrismError, PrismResult};
 use crate::taxonomy::schema::ErrorCategory;
 use crate::xdr::codec::XdrCodec;
 
-/// Every Soroban host error category, plus contract-specific and unknown variants.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(tag = "category", rename_all = "snake_case")]
 pub enum HostError {
@@ -28,17 +23,17 @@ pub enum HostError {
     Contract { code: u32 },
     Wasm { code: u32 },
     Events { code: u32 },
-    /// Error defined by a specific deployed contract.
+
     ContractSpecific {
         contract_id: Option<String>,
         code: u32,
     },
-    /// Unrecognised error — preserved for forward compatibility.
+
     Unknown { type_code: u32, sub_code: u32 },
 }
 
 impl HostError {
-    /// Human-readable category name.
+
     pub fn category_name(&self) -> &str {
         match self {
             Self::Budget { .. } => "Budget",
@@ -55,10 +50,7 @@ impl HostError {
             Self::Unknown { .. } => "Unknown",
         }
     }
-    /// Returns a one-line plain-English summary of what went wrong.
-    ///
-    /// This is the headline shown by `prism decode` — the first thing a
-    /// developer reads when diagnosing a failed transaction.
+
     pub fn summary(&self) -> String {
         match self {
             Self::Budget { code } => {
@@ -133,11 +125,6 @@ impl HostError {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Helpers kept from the original file
-// ---------------------------------------------------------------------------
-
-/// Classified error information extracted from a transaction result.
 #[derive(Debug, Clone)]
 pub struct ClassifiedError {
     pub category: ErrorCategory,
@@ -147,15 +134,6 @@ pub struct ClassifiedError {
     pub raw_data: serde_json::Value,
 }
 
-/// Extract a [`ClassifiedError`] from a decoded [`TransactionResult`] XDR.
-///
-/// Navigates `TransactionResult → results → OperationResult::OpInner →
-/// OperationResultTr::InvokeHostFunction → InvokeHostFunctionResult` and maps
-/// the failure variant to the correct error category and code.
-///
-/// Returns [`PrismError::TransactionSucceeded`] for a successful transaction and
-/// [`PrismError::NotSorobanTransaction`] when no `InvokeHostFunction` operation
-/// is present.
 pub fn from_transaction_result(tx_result: TransactionResult) -> PrismResult<ClassifiedError> {
     let op_results = match tx_result.result {
         TransactionResultResult::TxSuccess(_) => return Err(PrismError::TransactionSucceeded),
@@ -163,12 +141,10 @@ pub fn from_transaction_result(tx_result: TransactionResult) -> PrismResult<Clas
         TransactionResultResult::TxFeeBumpInnerSuccess(_) => {
             return Err(PrismError::TransactionSucceeded)
         }
-        // Any other top-level failure (TxTooEarly, TxBadSeq, etc.) has no
-        // InvokeHostFunction result to inspect.
+
         _ => return Err(PrismError::NotSorobanTransaction),
     };
 
-    // Find the first InvokeHostFunction operation result.
     let ihf_result = op_results
         .iter()
         .find_map(|op| {
@@ -180,16 +156,10 @@ pub fn from_transaction_result(tx_result: TransactionResult) -> PrismResult<Clas
         })
         .ok_or(PrismError::NotSorobanTransaction)?;
 
-    // Map the InvokeHostFunctionResult variant to category + code.
-    // The ScError lives in the diagnostic events / meta; here we derive the
-    // category from the result code and use 0 as the code for non-contract
-    // errors (the taxonomy lookup uses category + code together).
     let (category, error_code, is_contract_error) = match ihf_result {
         InvokeHostFunctionResult::Success(_) => return Err(PrismError::TransactionSucceeded),
         InvokeHostFunctionResult::Trapped => {
-            // Trapped means the host function raised an ScError; without the
-            // meta we cannot know the exact code, so we default to Contract/0
-            // and let the caller enrich from diagnostic events.
+
             (ErrorCategory::Contract, 0u32, false)
         }
         InvokeHostFunctionResult::ResourceLimitExceeded => (ErrorCategory::Budget, 0, false),
@@ -208,7 +178,6 @@ pub fn from_transaction_result(tx_result: TransactionResult) -> PrismResult<Clas
     })
 }
 
-/// Classify the error from a transaction result JSON.
 pub fn classify_error(tx_data: &serde_json::Value) -> PrismResult<ClassifiedError> {
     let status = tx_data
         .get("status")
@@ -236,7 +205,6 @@ pub fn classify_error(tx_data: &serde_json::Value) -> PrismResult<ClassifiedErro
     })
 }
 
-/// Map an error category string to an `ErrorCategory` enum value.
 pub fn parse_error_category(category_str: &str) -> Option<ErrorCategory> {
     match category_str.to_lowercase().as_str() {
         "budget" => Some(ErrorCategory::Budget),
@@ -402,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_summary_unknown_codes_fallback() {
-        // Unknown codes within known categories should still return a useful message
+
         let s = HostError::Budget { code: 99 }.summary();
         assert!(s.contains("99"));
         assert!(s.contains("Budget") || s.contains("budget"));
@@ -410,7 +378,7 @@ mod tests {
 
     #[test]
     fn test_summary_under_120_chars() {
-        // All known-code summaries must stay under 120 characters
+
         let errors = vec![
             HostError::Budget { code: 0 },
             HostError::Storage { code: 0 },

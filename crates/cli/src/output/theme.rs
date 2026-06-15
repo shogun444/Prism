@@ -1,4 +1,4 @@
-//! Semantic terminal color palette for CLI output.
+
 
 use std::sync::atomic::{AtomicBool, Ordering};
 

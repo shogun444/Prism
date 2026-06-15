@@ -1,24 +1,19 @@
-//! Auth error mappings.
-//!
-//! This module keeps the Auth category's human-readable decoding details in a
-//! compact, testable form for callers that need direct code-to-summary lookup.
+
 
 use crate::types::report::Severity;
 
-/// Human-readable Auth error detail.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AuthErrorDetail {
-    /// Numeric Auth subcode.
+
     pub code: u32,
-    /// Canonical error name.
+
     pub name: &'static str,
     /// Short explanation of the failure.
     pub summary: &'static str,
-    /// Severity to surface in diagnostics.
+
     pub severity: Severity,
 }
 
-/// Complete Auth error mapping table.
 pub const AUTH_ERROR_DETAILS: &[AuthErrorDetail] = &[
     AuthErrorDetail {
         code: 0,
@@ -58,7 +53,6 @@ pub const AUTH_ERROR_DETAILS: &[AuthErrorDetail] = &[
     },
 ];
 
-/// Look up a single Auth error detail by subcode.
 pub fn lookup(code: u32) -> Option<&'static AuthErrorDetail> {
     AUTH_ERROR_DETAILS.iter().find(|detail| detail.code == code)
 }

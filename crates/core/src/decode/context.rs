@@ -1,12 +1,8 @@
-//! Transaction context enricher.
-//!
-//! Decodes the full transaction envelope: called function, decoded arguments,
-//! auth requirements, resource footprint, and fee breakdown.
+
 
 use crate::error::PrismResult;
 use crate::types::report::{DiagnosticReport, FeeBreakdown, ResourceSummary, TransactionContext};
 
-/// Enrich a diagnostic report with full transaction context.
 pub fn enrich_report(
     report: &mut DiagnosticReport,
     tx_data: &serde_json::Value,
@@ -32,7 +28,6 @@ pub fn enrich_report(
     Ok(())
 }
 
-/// Extract the called function name from the transaction envelope.
 fn extract_function_name(tx_data: &serde_json::Value) -> Option<String> {
     tx_data
         .get("functionName")
@@ -40,7 +35,6 @@ fn extract_function_name(tx_data: &serde_json::Value) -> Option<String> {
         .map(std::string::ToString::to_string)
 }
 
-/// Extract and decode function arguments.
 fn extract_arguments(tx_data: &serde_json::Value) -> Vec<String> {
     tx_data
         .get("arguments")
@@ -49,7 +43,6 @@ fn extract_arguments(tx_data: &serde_json::Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Extract fee breakdown from the transaction.
 fn extract_fee_breakdown(tx_data: &serde_json::Value) -> FeeBreakdown {
     FeeBreakdown {
         inclusion_fee: tx_data
@@ -71,7 +64,6 @@ fn extract_fee_breakdown(tx_data: &serde_json::Value) -> FeeBreakdown {
     }
 }
 
-/// Extract resource usage summary.
 fn extract_resource_summary(_tx_data: &serde_json::Value) -> ResourceSummary {
     ResourceSummary {
         cpu_instructions_used: 0,
