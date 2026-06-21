@@ -459,4 +459,215 @@ mod tests {
         let decoded = <ScVec as crate::xdr::codec::XdrCodec>::from_xdr_base64(&b64).expect("decode");
         assert_eq!(scvec, decoded);
     }
+
+    fn scval_round_trip(val: ScVal) {
+        let b64 = XdrCodec::to_xdr_base64(&val).expect("encode");
+        let decoded = <ScVal as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(val, decoded);
+    }
+
+    #[test]
+    fn test_scval_bool_round_trip() {
+        scval_round_trip(ScVal::Bool(false));
+        scval_round_trip(ScVal::Bool(true));
+    }
+
+    #[test]
+    fn test_scval_void_round_trip() {
+        scval_round_trip(ScVal::Void);
+    }
+
+    #[test]
+    fn test_scval_i32_round_trip() {
+        scval_round_trip(ScVal::I32(0));
+        scval_round_trip(ScVal::I32(-1));
+        scval_round_trip(ScVal::I32(i32::MIN));
+        scval_round_trip(ScVal::I32(i32::MAX));
+    }
+
+    #[test]
+    fn test_scval_u32_round_trip() {
+        scval_round_trip(ScVal::U32(0));
+        scval_round_trip(ScVal::U32(42));
+        scval_round_trip(ScVal::U32(u32::MAX));
+    }
+
+    #[test]
+    fn test_scval_i64_round_trip() {
+        scval_round_trip(ScVal::I64(0));
+        scval_round_trip(ScVal::I64(-1));
+        scval_round_trip(ScVal::I64(i64::MIN));
+        scval_round_trip(ScVal::I64(i64::MAX));
+    }
+
+    #[test]
+    fn test_scval_u64_round_trip() {
+        scval_round_trip(ScVal::U64(0));
+        scval_round_trip(ScVal::U64(u64::MAX));
+    }
+
+    #[test]
+    fn test_scval_u128_round_trip() {
+        use stellar_xdr::curr::UInt128Parts;
+        scval_round_trip(ScVal::U128(UInt128Parts { hi: 0, lo: 0 }));
+        scval_round_trip(ScVal::U128(UInt128Parts {
+            hi: u64::MAX,
+            lo: u64::MAX,
+        }));
+        scval_round_trip(ScVal::U128(UInt128Parts {
+            hi: 0xDEAD_BEEF_CAFE_1234,
+            lo: 0x1234_5678_9ABC_DEF0,
+        }));
+    }
+
+    #[test]
+    fn test_scval_i128_round_trip() {
+        use stellar_xdr::curr::Int128Parts;
+        scval_round_trip(ScVal::I128(Int128Parts { hi: 0, lo: 0 }));
+        scval_round_trip(ScVal::I128(Int128Parts {
+            hi: i64::MIN,
+            lo: u64::MAX,
+        }));
+        scval_round_trip(ScVal::I128(Int128Parts {
+            hi: i64::MAX,
+            lo: u64::MAX,
+        }));
+    }
+
+    #[test]
+    fn test_scval_symbol_round_trip() {
+        use stellar_xdr::curr::StringM;
+        scval_round_trip(ScVal::Symbol(ScSymbol(
+            StringM::try_from(b"transfer".to_vec()).unwrap(),
+        )));
+        scval_round_trip(ScVal::Symbol(ScSymbol(
+            StringM::try_from(vec![]).unwrap(),
+        )));
+    }
+
+    #[test]
+    fn test_scval_string_round_trip() {
+        use stellar_xdr::curr::StringM;
+        scval_round_trip(ScVal::String(ScString(
+            StringM::try_from(b"hello world".to_vec()).unwrap(),
+        )));
+        scval_round_trip(ScVal::String(ScString(StringM::try_from(vec![]).unwrap())));
+    }
+
+    #[test]
+    fn test_scval_bytes_round_trip() {
+        use stellar_xdr::curr::BytesM;
+        scval_round_trip(ScVal::Bytes(ScBytes(BytesM::try_from(vec![]).unwrap())));
+        scval_round_trip(ScVal::Bytes(ScBytes(
+            BytesM::try_from(vec![0x00, 0xFF, 0xAB, 0xCD]).unwrap(),
+        )));
+    }
+
+    #[test]
+    fn test_scval_address_round_trip() {
+        use stellar_xdr::curr::Hash;
+        scval_round_trip(ScVal::Address(ScAddress::Contract(Hash([0u8; 32]))));
+        scval_round_trip(ScVal::Address(ScAddress::Contract(Hash([0xFFu8; 32]))));
+    }
+
+    #[test]
+    fn test_scval_vec_round_trip() {
+        scval_round_trip(ScVal::Vec(None));
+        let inner = ScVec(
+            vec![ScVal::U32(1), ScVal::Bool(true), ScVal::Void]
+                .try_into()
+                .unwrap(),
+        );
+        scval_round_trip(ScVal::Vec(Some(inner)));
+    }
+
+    #[test]
+    fn test_scval_map_round_trip() {
+        use stellar_xdr::curr::{ScMapEntry, StringM};
+        scval_round_trip(ScVal::Map(None));
+        let entry = ScMapEntry {
+            key: ScVal::Symbol(ScSymbol(StringM::try_from(b"key".to_vec()).unwrap())),
+            val: ScVal::U32(99),
+        };
+        let map = ScMap(vec![entry].try_into().unwrap());
+        scval_round_trip(ScVal::Map(Some(map)));
+    }
+
+    #[test]
+    fn test_scval_ledger_key_contract_instance_round_trip() {
+        scval_round_trip(ScVal::LedgerKeyContractInstance);
+    }
+
+    #[test]
+    fn test_scval_ledger_key_nonce_round_trip() {
+        use stellar_xdr::curr::ScNonceKey;
+        scval_round_trip(ScVal::LedgerKeyNonce(ScNonceKey { nonce: 0 }));
+        scval_round_trip(ScVal::LedgerKeyNonce(ScNonceKey {
+            nonce: i64::MIN,
+        }));
+        scval_round_trip(ScVal::LedgerKeyNonce(ScNonceKey {
+            nonce: i64::MAX,
+        }));
+    }
+
+    #[test]
+    fn test_scval_bytes_codec_standalone() {
+        use stellar_xdr::curr::BytesM;
+        let val = ScBytes(BytesM::try_from(vec![1u8, 2, 3]).unwrap());
+        let b64 = XdrCodec::to_xdr_base64(&val).expect("encode");
+        let decoded = <ScBytes as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(val, decoded);
+    }
+
+    #[test]
+    fn test_scval_symbol_codec_standalone() {
+        let val = ScSymbol(stellar_xdr::curr::StringM::try_from("mint").unwrap());
+        let b64 = XdrCodec::to_xdr_base64(&val).expect("encode");
+        let decoded = <ScSymbol as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(val, decoded);
+    }
+
+    #[test]
+    fn test_scval_string_codec_standalone() {
+        use stellar_xdr::curr::StringM;
+        let val = ScString(StringM::try_from(b"Prism".to_vec()).unwrap());
+        let b64 = XdrCodec::to_xdr_base64(&val).expect("encode");
+        let decoded = <ScString as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(val, decoded);
+    }
+
+    #[test]
+    fn test_scval_address_codec_standalone() {
+        use stellar_xdr::curr::Hash;
+        let val = ScAddress::Contract(Hash([0xABu8; 32]));
+        let b64 = XdrCodec::to_xdr_base64(&val).expect("encode");
+        let decoded = <ScAddress as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(val, decoded);
+    }
+
+    #[test]
+    fn test_scmap_codec_standalone() {
+        use stellar_xdr::curr::ScMapEntry;
+        let entry = ScMapEntry {
+            key: ScVal::U32(0),
+            val: ScVal::Bool(true),
+        };
+        let map = ScMap(vec![entry].try_into().unwrap());
+        let b64 = XdrCodec::to_xdr_base64(&map).expect("encode");
+        let decoded = <ScMap as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(map, decoded);
+    }
+
+    #[test]
+    fn test_ledger_key_codec_standalone() {
+        use stellar_xdr::curr::{ContractDataDurability, Hash, LedgerKeyContractData};
+        let key = LedgerKey::ContractData(LedgerKeyContractData {
+            contract: ScAddress::Contract(Hash([0u8; 32])),
+            key: ScVal::LedgerKeyContractInstance,
+            durability: ContractDataDurability::Persistent,
+        });
+        let b64 = XdrCodec::to_xdr_base64(&key).expect("encode");
+        let decoded = <LedgerKey as XdrCodec>::from_xdr_base64(&b64).expect("decode");
+        assert_eq!(key, decoded);
+    }
 }

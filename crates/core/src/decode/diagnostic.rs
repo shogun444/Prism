@@ -137,11 +137,13 @@ fn analyze_diagnostic_event(report: &mut DiagnosticReport, event: &DiagnosticEve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use stellar_xdr::curr::{ScVal, ScVec, ScMap, ScMapEntry, Int128Parts};
+    use stellar_xdr::curr::{
+        Int128Parts, ScMap, ScMapEntry, ScString, ScSymbol, ScVal, ScVec, StringM, UInt128Parts,
+    };
 
     #[test]
     fn test_scval_to_string_supported_variants() {
-        assert_eq!(scval_to_string(&ScVal::String("hello".try_into().unwrap())), Some("hello".to_string()));
+        assert_eq!(scval_to_string(&ScVal::String(ScString(StringM::try_from(b"hello".to_vec()).unwrap()))), Some("hello".to_string()));
         assert_eq!(scval_to_string(&ScVal::Bool(true)), Some("true".to_string()));
         assert_eq!(scval_to_string(&ScVal::Bool(false)), Some("false".to_string()));
         assert_eq!(scval_to_string(&ScVal::I32(-2147483648)), Some("-2147483648".to_string()));
@@ -162,19 +164,19 @@ mod tests {
     #[test]
     fn test_scval_to_string_large_integers() {
         // U128 standard
-        let u128_val = ScVal::U128(Int128Parts { hi: 1, lo: 0 });
+        let u128_val = ScVal::U128(UInt128Parts { hi: 1, lo: 0 });
         assert_eq!(scval_to_string(&u128_val), Some("18446744073709551616".to_string()));
 
         // I128 standard
         let i128_val = ScVal::I128(Int128Parts { hi: -1i64, lo: 0 });
         assert_eq!(scval_to_string(&i128_val), Some("-18446744073709551616".to_string()));
 
-        // U128 Max: hi is -1 (all 1s), lo is u64::MAX
-        let u128_max = ScVal::U128(Int128Parts { hi: -1i64, lo: u64::MAX });
+        // U128 Max: hi is u64::MAX (all 1s), lo is u64::MAX
+        let u128_max = ScVal::U128(UInt128Parts { hi: u64::MAX, lo: u64::MAX });
         assert_eq!(scval_to_string(&u128_max), Some("340282366920938463463374607431768211455".to_string()));
 
         // U128 Min: 0
-        let u128_min = ScVal::U128(Int128Parts { hi: 0, lo: 0 });
+        let u128_min = ScVal::U128(UInt128Parts { hi: 0, lo: 0 });
         assert_eq!(scval_to_string(&u128_min), Some("0".to_string()));
 
         // I128 Max: hi is i64::MAX, lo is u64::MAX
@@ -189,7 +191,7 @@ mod tests {
     #[test]
     fn test_scval_to_string_nested_map() {
         let map_entry = ScMapEntry {
-            key: ScVal::Symbol("key".try_into().unwrap()),
+            key: ScVal::Symbol(ScSymbol(StringM::try_from(b"key".to_vec()).unwrap())),
             val: ScVal::U32(42),
         };
         let scmap = ScMap(vec![map_entry].try_into().unwrap());
