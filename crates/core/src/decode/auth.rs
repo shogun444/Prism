@@ -64,6 +64,10 @@ pub struct AuthInvocation {
     pub function: Option<String>,
     /// Number of arguments passed to the invocation.
     pub arg_count: usize,
+    /// Human-readable argument values decoded from SCVal payloads.
+    pub args: Vec<String>,
+    /// Compact human-readable description of the authorized target.
+    pub target: String,
 }
 
 /// A readable authorization chain parsed from a raw auth entry: the credential
@@ -100,7 +104,9 @@ impl AuthChain {
 fn parse_credential(credentials: &SorobanCredentials) -> AuthCredential {
     match credentials {
         SorobanCredentials::SourceAccount => AuthCredential::SourceAccount,
-        SorobanCredentials::Address(addr) => AuthCredential::Address(parse_address_credential(addr)),
+        SorobanCredentials::Address(addr) => {
+            AuthCredential::Address(parse_address_credential(addr))
+        }
     }
 }
 
@@ -127,13 +133,23 @@ fn walk_invocation(
 
 fn parse_function(function: &SorobanAuthorizedFunction, depth: usize) -> AuthInvocation {
     match function {
-        SorobanAuthorizedFunction::ContractFn(args) => AuthInvocation {
-            depth,
-            kind: AuthFunctionKind::ContractFn,
-            contract: Some(scaddress_to_strkey(&args.contract_address)),
-            function: Some(args.function_name.to_string()),
-            arg_count: args.args.len(),
-        },
+        SorobanAuthorizedFunction::ContractFn(args) => {
+            let contract = scaddress_to_strkey(&args.contract_address);
+            let function = args.function_name.to_string();
+            let readable_args: Vec<String> =
+                args.args.iter().map(scval_to_readable_string).collect();
+            let target = format!("{}.{}({})", contract, function, readable_args.join(", "));
+
+            AuthInvocation {
+                depth,
+                kind: AuthFunctionKind::ContractFn,
+                contract: Some(contract),
+                function: Some(function),
+                arg_count: readable_args.len(),
+                args: readable_args,
+                target,
+            }
+        }
         // Both `CreateContractHostFn` and the v2 form authorize a contract
         // creation; the contract address is not yet known at this point.
         _ => AuthInvocation {
@@ -142,7 +158,53 @@ fn parse_function(function: &SorobanAuthorizedFunction, depth: usize) -> AuthInv
             contract: None,
             function: None,
             arg_count: 0,
+            args: Vec::new(),
+            target: "create_contract".to_string(),
         },
+    }
+}
+
+/// Render an `ScVal` argument in a compact form suitable for auth summaries.
+pub fn scval_to_readable_string(val: &ScVal) -> String {
+    match val {
+        ScVal::Void => "void".to_string(),
+        ScVal::Bool(b) => b.to_string(),
+        ScVal::Symbol(sym) => sym.to_string(),
+        ScVal::String(s) => format!("\"{}\"", s),
+        ScVal::U32(u) => u.to_string(),
+        ScVal::I32(i) => i.to_string(),
+        ScVal::U64(u) => u.to_string(),
+        ScVal::I64(i) => i.to_string(),
+        ScVal::Timepoint(t) => t.to_string(),
+        ScVal::Duration(d) => d.to_string(),
+        ScVal::U128(u) => (((u.hi as u128) << 64) | (u.lo as u128)).to_string(),
+        ScVal::I128(i) => (((i.hi as i128) << 64) | (i.lo as u128 as i128)).to_string(),
+        ScVal::Address(address) => scaddress_to_strkey(address),
+        ScVal::Bytes(bytes) => format!(
+            "0x{}",
+            bytes.iter().map(|b| format!("{b:02x}")).collect::<String>()
+        ),
+        ScVal::Vec(Some(vec)) => {
+            let items: Vec<String> = vec.iter().map(scval_to_readable_string).collect();
+            format!("[{}]", items.join(", "))
+        }
+        ScVal::Vec(None) => "[]".to_string(),
+        ScVal::Map(Some(map)) => {
+            let items: Vec<String> = map
+                .iter()
+                .map(|entry| {
+                    format!(
+                        "{}: {}",
+                        scval_to_readable_string(&entry.key),
+                        scval_to_readable_string(&entry.val)
+                    )
+                })
+                .collect();
+            format!("{{{}}}", items.join(", "))
+        }
+        ScVal::Map(None) => "{}".to_string(),
+        ScVal::Error(err) => format!("error:{err:?}"),
+        other => format!("{other:?}"),
     }
 }
 
@@ -162,7 +224,9 @@ mod tests {
     use stellar_xdr::curr::{InvokeContractArgs, ScSymbol};
 
     fn account_address(seed: u8) -> ScAddress {
-        ScAddress::Account(AccountId(PublicKey::PublicKeyTypeEd25519(Uint256([seed; 32]))))
+        ScAddress::Account(AccountId(PublicKey::PublicKeyTypeEd25519(Uint256(
+            [seed; 32],
+        ))))
     }
 
     fn contract_address(seed: u8) -> ScAddress {
@@ -209,6 +273,8 @@ mod tests {
         assert_eq!(root.kind, AuthFunctionKind::ContractFn);
         assert_eq!(root.function.as_deref(), Some("transfer"));
         assert_eq!(root.arg_count, 1);
+        assert_eq!(root.args, vec!["1"]);
+        assert!(root.target.contains(".transfer(1)"));
         assert!(root.contract.as_deref().unwrap().starts_with('C'));
     }
 
@@ -248,7 +314,10 @@ mod tests {
                 signature_expiration_ledger: 0,
                 signature: ScVal::Void,
             }),
-            root_invocation: invocation(contract_fn(contract_address(2), "f", vec![]), empty_subs()),
+            root_invocation: invocation(
+                contract_fn(contract_address(2), "f", vec![]),
+                empty_subs(),
+            ),
         };
 
         let chain = AuthChain::from_entry(&entry);
@@ -261,9 +330,16 @@ mod tests {
     #[test]
     fn nested_invocations_are_flattened_depth_first() {
         // root -> [child_a -> [grandchild], child_b]
-        let grandchild = invocation(contract_fn(contract_address(30), "gc", vec![]), empty_subs());
+        let grandchild = invocation(
+            contract_fn(contract_address(30), "gc", vec![]),
+            empty_subs(),
+        );
         let child_a = invocation(
-            contract_fn(contract_address(20), "a", vec![ScVal::U32(1), ScVal::U32(2)]),
+            contract_fn(
+                contract_address(20),
+                "a",
+                vec![ScVal::U32(1), ScVal::U32(2)],
+            ),
             vec![grandchild],
         );
         let child_b = invocation(contract_fn(contract_address(21), "b", vec![]), empty_subs());
@@ -284,12 +360,44 @@ mod tests {
             .map(|i| (i.depth, i.function.as_deref().unwrap()))
             .collect();
 
-        assert_eq!(
-            steps,
-            vec![(0, "root"), (1, "a"), (2, "gc"), (1, "b")]
-        );
-        // Arg counts are preserved per step.
+        assert_eq!(steps, vec![(0, "root"), (1, "a"), (2, "gc"), (1, "b")]);
+        // Arg counts and readable argument values are preserved per step.
         assert_eq!(chain.invocations[1].arg_count, 2);
+        assert_eq!(chain.invocations[1].args, vec!["1", "2"]);
+        assert!(chain.invocations[1].target.contains(".a(1, 2)"));
+    }
+
+    #[test]
+    fn contract_invocation_decodes_readable_argument_values() {
+        let entry = SorobanAuthorizationEntry {
+            credentials: SorobanCredentials::SourceAccount,
+            root_invocation: invocation(
+                contract_fn(
+                    contract_address(8),
+                    "transfer",
+                    vec![
+                        ScVal::Address(account_address(4)),
+                        ScVal::Bool(true),
+                        ScVal::Vec(Some(
+                            vec![ScVal::U32(10), ScVal::I32(-2)].try_into().unwrap(),
+                        )),
+                    ],
+                ),
+                empty_subs(),
+            ),
+        };
+
+        let chain = AuthChain::from_entry(&entry);
+        let root = &chain.invocations[0];
+
+        assert_eq!(root.function.as_deref(), Some("transfer"));
+        assert_eq!(root.arg_count, 3);
+        assert!(root.args[0].starts_with('G'));
+        assert_eq!(root.args[1], "true");
+        assert_eq!(root.args[2], "[10, -2]");
+        assert!(root.target.contains(".transfer("));
+        assert!(root.target.contains("true"));
+        assert!(root.target.contains("[10, -2]"));
     }
 
     #[test]
