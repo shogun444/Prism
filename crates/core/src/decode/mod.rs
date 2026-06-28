@@ -1,7 +1,7 @@
 
 pub mod auth;
 pub mod auth_signature;
-pub mod context;
+pub mod decode_context;
 pub mod contract_error;
 pub mod cross_contract;
 pub mod diagnostic;
@@ -173,6 +173,7 @@ pub async fn decode_transaction_with_op_filter(
         None => (0..num_ops).collect(),
     };
 
+let ctx = decode_context::DecodeContextBuilder::new(network.clone()).build();
     for i in indices {
         let mut tx_data = base_tx_data.clone();
         filter_transaction_by_operation(&mut tx_data, i)?;
@@ -193,7 +194,7 @@ pub async fn decode_transaction_with_op_filter(
         }
 
         diagnostic::enrich_report(&mut report, &tx_data)?;
-        context::enrich_report(&mut report, &tx_data)?;
+        decode_context::enrich_report(&mut report, &tx_data)?;
         cross_contract::attribute_failure(&mut report, &tx_data)?;
         reports.push(report);
     }

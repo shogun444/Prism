@@ -45,6 +45,8 @@ pub struct ContractErrorInfo {
     pub error_name: Option<String>,
 
     pub doc_comment: Option<String>,
+    
+    pub learn_more: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -131,6 +133,8 @@ pub struct DiagnosticReport {
     /// Malformed or empty byte sequences produce a human-readable error label.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub auth_signatures: Vec<String>,
+
+    pub learn_more: String,
 }
 
 impl DiagnosticReport {
@@ -150,6 +154,7 @@ impl DiagnosticReport {
             related_errors: Vec::new(),
             cross_contract_attribution: None,
             auth_signatures: Vec::new(),
-        }
+            learn_more: "https://developers.stellar.org/docs/learn/smart-contracts/errors".to_string(),  
+       }
     }
 }
