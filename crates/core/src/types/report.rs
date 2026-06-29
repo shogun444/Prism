@@ -84,6 +84,7 @@ pub struct ResourceSummary {
     pub memory_bytes_used: u64,
     pub memory_bytes_limit: u64,
     pub read_bytes: u64,
+    pub read_bytes_limit: u64,
     pub write_bytes: u64,
 }
 

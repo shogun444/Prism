@@ -2,6 +2,7 @@
 pub mod auth;
 pub mod auth_address_nonce;
 pub mod auth_signature;
+pub mod context;
 pub mod decode_context;
 pub mod contract_error;
 pub mod cross_contract;
@@ -201,7 +202,7 @@ pub async fn decode_transaction_with_op_filter(
         None => (0..num_ops).collect(),
     };
 
-let ctx = decode_context::DecodeContextBuilder::new(network.clone()).build();
+let ctx = decode_context::DecodeContextBuilder::from(network).build();
     for i in indices {
         let mut tx_data = base_tx_data.clone();
         filter_transaction_by_operation(&mut tx_data, i)?;
@@ -213,7 +214,7 @@ let ctx = decode_context::DecodeContextBuilder::new(network.clone()).build();
             if let Ok(contract_info) = contract_error::resolve(
                 &error_info.contract_id.unwrap_or_default(),
                 error_info.error_code,
-                network,
+                &ctx,
             )
             .await
             {
@@ -222,7 +223,7 @@ let ctx = decode_context::DecodeContextBuilder::new(network.clone()).build();
         }
 
         diagnostic::enrich_report(&mut report, &tx_data)?;
-        decode_context::enrich_report(&mut report, &tx_data)?;
+        context::enrich_report(&mut report, &tx_data)?;
         cross_contract::attribute_failure(&mut report, &tx_data)?;
         reports.push(report);
     }

@@ -37,6 +37,15 @@ pub fn print_report(report: &DiagnosticReport) -> anyhow::Result<()> {
             )
             .render()
         );
+        println!(
+            "{}",
+            BudgetBar::new(
+                "Read",
+                context.resources.read_bytes,
+                context.resources.read_bytes_limit
+            )
+            .render()
+        );
         println!();
         print!("{}", render_fee_breakdown(&context.fee));
     }

@@ -584,6 +584,7 @@ mod tests {
                 memory_bytes_used: 5000,
                 memory_bytes_limit: 50000,
                 read_bytes: 1000,
+                read_bytes_limit: 10000,
                 write_bytes: 500,
             },
         };

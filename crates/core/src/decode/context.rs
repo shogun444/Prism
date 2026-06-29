@@ -95,15 +95,15 @@ fn extract_fee_breakdown(tx_data: &serde_json::Value) -> FeeBreakdown {
     if let Some(resource_fee_obj) = tx_data.get("resourceFee").and_then(|v| v.as_object()) {
         non_refundable_fee = resource_fee_obj
             .get("totalNonRefundableResourceFeeCharged")
-            .and_then(|v| v.as_i64)
+            .and_then(|v| v.as_i64())
             .unwrap_or(0);
         refundable_fee = resource_fee_obj
             .get("totalRefundableResourceFeeCharged")
-            .and_then(|v| v.as_i64)
+            .and_then(|v| v.as_i64())
             .unwrap_or(0);
         rent_fee = resource_fee_obj
             .get("rentFeeCharged")
-            .and_then(|v| v.as_i64)
+            .and_then(|v| v.as_i64())
             .unwrap_or(0);
         has_soroban_meta = true;
     } else if let Some(meta_xdr_b64) = tx_data.get("resultMetaXdr").and_then(|v| v.as_str()) {
@@ -135,7 +135,7 @@ fn extract_fee_breakdown(tx_data: &serde_json::Value) -> FeeBreakdown {
 
     let inclusion_fee = tx_data
         .get("inclusionFee")
-        .and_then(|v| v.as_i64)
+        .and_then(|v| v.as_i64())
         .unwrap_or(total_fee - resource_fee);
 
     FeeBreakdown {
@@ -153,6 +153,8 @@ fn extract_resource_summary(tx_data: &serde_json::Value) -> ResourceSummary {
     let mut cpu_limit = 0;
     let mut mem_used = 0;
     let mut mem_limit = 0;
+    let mut read_used = 0;
+    let mut read_limit = 0;
 
     if let Some(events) = tx_data.get("diagnosticEvents").and_then(|e| e.as_array()) {
         for event in events {
@@ -168,6 +170,9 @@ fn extract_resource_summary(tx_data: &serde_json::Value) -> ResourceSummary {
                     } else if category == "memory" {
                         mem_used = used;
                         mem_limit = limit;
+                    } else if category == "read" {
+                        read_used = used;
+                        read_limit = limit;
                     }
                 }
             }
@@ -179,7 +184,8 @@ fn extract_resource_summary(tx_data: &serde_json::Value) -> ResourceSummary {
         cpu_instructions_limit: cpu_limit,
         memory_bytes_used: mem_used,
         memory_bytes_limit: mem_limit,
-        read_bytes: 0,
+        read_bytes: read_used,
+        read_bytes_limit: read_limit,
         write_bytes: 0,
     }
 }
@@ -213,6 +219,79 @@ mod tests {
         TransactionMeta, TransactionMetaV3, SorobanTransactionMeta, SorobanTransactionMetaExt,
         SorobanTransactionMetaExtV1, ExtensionPoint,
     };
+
+    #[test]
+    fn test_extract_resource_summary_read() {
+        let tx_data = serde_json::json!({
+            "diagnosticEvents": [
+                {
+                    "type": "budget",
+                    "data": {
+                        "category": "read",
+                        "used": 12345,
+                        "limit": 100000
+                    }
+                }
+            ]
+        });
+        let result = extract_resource_summary(&tx_data);
+        assert_eq!(result.read_bytes, 12345);
+        assert_eq!(result.read_bytes_limit, 100000);
+        assert_eq!(result.cpu_instructions_used, 0);
+        assert_eq!(result.memory_bytes_used, 0);
+    }
+
+    #[test]
+    fn test_extract_resource_summary_empty() {
+        let tx_data = serde_json::json!({});
+        let result = extract_resource_summary(&tx_data);
+        assert_eq!(result.read_bytes, 0);
+        assert_eq!(result.read_bytes_limit, 0);
+        assert_eq!(result.cpu_instructions_used, 0);
+        assert_eq!(result.memory_bytes_used, 0);
+    }
+
+    #[test]
+    fn test_extract_resource_summary_cpu_regression() {
+        let tx_data = serde_json::json!({
+            "diagnosticEvents": [
+                {
+                    "type": "budget",
+                    "data": {
+                        "category": "cpu",
+                        "used": 5000,
+                        "limit": 10000
+                    }
+                }
+            ]
+        });
+        let result = extract_resource_summary(&tx_data);
+        assert_eq!(result.cpu_instructions_used, 5000);
+        assert_eq!(result.cpu_instructions_limit, 10000);
+        assert_eq!(result.read_bytes, 0);
+        assert_eq!(result.read_bytes_limit, 0);
+    }
+
+    #[test]
+    fn test_extract_resource_summary_unknown_category() {
+        let tx_data = serde_json::json!({
+            "diagnosticEvents": [
+                {
+                    "type": "budget",
+                    "data": {
+                        "category": "unknown_category",
+                        "used": 999,
+                        "limit": 9999
+                    }
+                }
+            ]
+        });
+        let result = extract_resource_summary(&tx_data);
+        assert_eq!(result.read_bytes, 0);
+        assert_eq!(result.read_bytes_limit, 0);
+        assert_eq!(result.cpu_instructions_used, 0);
+        assert_eq!(result.memory_bytes_used, 0);
+    }
 
     #[test]
     fn test_extract_fee_breakdown_non_soroban() {
